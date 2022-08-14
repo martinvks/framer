@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type TestCase struct {
@@ -37,29 +38,37 @@ func getDirEntry(directory string) (os.DirEntry, error) {
 		return nil, err
 	}
 
-	if len(dirEntries) == 0 {
-		return nil, errors.New(fmt.Sprintf("Directory %v is empty", directory))
+	var jsonEntries []os.DirEntry
+	for _, entry := range dirEntries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
+			jsonEntries = append(jsonEntries, entry)
+		}
+	}
+
+	if len(jsonEntries) == 0 {
+		return nil, errors.New(fmt.Sprintf("Directory %v does not contain any json request files", directory))
 	}
 
 	fmt.Println("Requests")
-	for index, value := range dirEntries {
-		fmt.Printf("%v. %v\n", index, value.Name())
+	for index, entry := range jsonEntries {
+		fmt.Printf("%v. %v\n", index, entry.Name())
 	}
 
 	fmt.Println("Choose request number:")
 	var input string
 	_, err = fmt.Scanln(&input)
+	fmt.Println()
 
 	if err != nil {
 		return nil, err
 	}
 
 	index, err := strconv.Atoi(input)
-	if err != nil || (index < 0 || index >= len(dirEntries)) {
+	if err != nil || (index < 0 || index >= len(jsonEntries)) {
 		return nil, errors.New(fmt.Sprintf("Invalid request number: %v", input))
 	}
 
-	return dirEntries[index], nil
+	return jsonEntries[index], nil
 }
 
 func unmarshalTestCase(directory string, dirEntry os.DirEntry) (TestCase, error) {

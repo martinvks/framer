@@ -45,7 +45,6 @@ func doRequest(args arguments.Arguments, request utils.HTTPMessage) (utils.HTTPM
 }
 
 func printResponse(printLines int, response utils.HTTPMessage) {
-	fmt.Println()
 	for _, h := range response.Headers {
 		fmt.Printf("%s: %s\n", h.Name, h.Value)
 	}
