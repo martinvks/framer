@@ -1,60 +1,95 @@
 package main
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
-	"os"
-
-	"github.com/Martinvks/httptestrunner/arguments"
 	"github.com/Martinvks/httptestrunner/http2"
 	"github.com/Martinvks/httptestrunner/utils"
+	"net/url"
+	"os"
+	"time"
+
+	"github.com/Martinvks/httptestrunner/arguments"
 )
 
 func main() {
-	args, err := arguments.GetArguments()
+	args, err := arguments.GetArguments(os.Args[1:])
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error parsing arguments: %v\n", err)
 		os.Exit(1)
 	}
 
-	testCase, err := utils.GetTestCase(args.RequestsDirectory)
+	switch args := args.(type) {
+	case arguments.SingleModeArguments:
+		err = runSingleMode(args)
+	case arguments.MultipleModeArguments:
+		err = runMultipleMode(args)
+	}
+
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error reading request file: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, err.Error())
 		os.Exit(1)
+	}
+}
+
+func runSingleMode(args arguments.SingleModeArguments) error {
+	testCase, err := utils.GetSingleTestCase(args.FileName)
+	if err != nil {
+		return fmt.Errorf("error reading request file: %v\n", err)
 	}
 
 	request := utils.GetRequest(args.Target, testCase)
 
-	response, err := doRequest(args, request)
+	response, err := doRequest(
+		args.Proto,
+		args.Target,
+		args.Timeout,
+		args.KeyLogFile,
+		request,
+	)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
-	printResponse(args.PrintLines, response)
+	utils.PrintHttpMessage(args.PrintLines, response)
+
+	return nil
 }
 
-func doRequest(args arguments.Arguments, request utils.HTTPMessage) (utils.HTTPMessage, error) {
-	switch args.Proto {
+func runMultipleMode(args arguments.MultipleModeArguments) error {
+	testCases, err := utils.GetAllTestCases(args.Directory)
+	if err != nil {
+		return fmt.Errorf("error reading request files: %v\n", err)
+	}
+
+	for _, testCase := range testCases {
+		request := utils.GetRequest(args.Target, testCase)
+		response, err := doRequest(
+			args.Proto,
+			args.Target,
+			args.Timeout,
+			args.KeyLogFile,
+			request,
+		)
+		utils.WriteHttpMessage(response, err)
+	}
+
+	return nil
+}
+
+func doRequest(
+	proto int,
+	target *url.URL,
+	timeout time.Duration,
+	keyLogFile string,
+	request utils.HTTPMessage,
+) (utils.HTTPMessage, error) {
+	switch proto {
 	case arguments.H2:
-		return http2.SendHTTP2Request(args.Target, args.Timeout, args.KeyLogFile, request)
+		return http2.SendHTTP2Request(target, timeout, keyLogFile, request)
 	case arguments.H3:
-		fmt.Println("TODO: implement http3")
-	}
-	return utils.HTTPMessage{}, nil
-}
-
-func printResponse(printLines int, response utils.HTTPMessage) {
-	for _, h := range response.Headers {
-		fmt.Printf("%s: %s\n", h.Name, h.Value)
-	}
-	fmt.Println()
-	lines := bytes.Split(response.Body, []byte{'\n'})
-	for i, l := range lines {
-		if printLines < 0 || i < printLines {
-			fmt.Println(string(l))
-		} else {
-			break
-		}
+		return utils.HTTPMessage{}, errors.New("h3 not implemented")
+	default:
+		return utils.HTTPMessage{}, fmt.Errorf("unknown proto %d", proto)
 	}
 }

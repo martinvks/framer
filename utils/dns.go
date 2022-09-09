@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"net"
 )
@@ -18,5 +17,5 @@ func LookUp(domain string) (net.IP, error) {
 		}
 	}
 
-	return nil, errors.New(fmt.Sprintf("DNS lookup failed for %v", domain))
+	return nil, fmt.Errorf("DNS lookup failed for %v", domain)
 }

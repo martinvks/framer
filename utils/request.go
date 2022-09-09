@@ -6,13 +6,14 @@ func GetRequest(target *url.URL, testCase TestCase) HTTPMessage {
 
 	defaultHeaders := []Header{
 		{":authority", target.Host},
-		{":method", testCase.Method},
+		{":method", testCase.Data.Method},
 		{":path", target.RequestURI()},
 		{":scheme", "https"},
+		{"x-id", testCase.Id},
 	}
 
 	return HTTPMessage{
-		Body:    []byte(testCase.Body),
-		Headers: append(defaultHeaders, testCase.Headers...),
+		Body:    []byte(testCase.Data.Body),
+		Headers: append(defaultHeaders, testCase.Data.Headers...),
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -13,71 +14,178 @@ const (
 	H3
 )
 
-type Arguments struct {
-	KeyLogFile        string
-	PrintLines        int
-	Proto             int
-	Timeout           time.Duration
-	Target            *url.URL
-	RequestsDirectory string
+var (
+	keyLogFile string
+	proto      string
+	timeout    time.Duration
+
+	printLines int
+	fileName   string
+
+	csvLogFile string
+	directory  string
+)
+
+type CommonArguments struct {
+	KeyLogFile string
+	Proto      int
+	Timeout    time.Duration
+	Target     *url.URL
 }
 
-func GetArguments() (Arguments, error) {
-	var keyLogFile string
-	flag.StringVar(&keyLogFile, "k", "", "Filename to log TLS master secrets")
+type SingleModeArguments struct {
+	CommonArguments
+	PrintLines int
+	FileName   string
+}
 
-	var printLines int
-	flag.IntVar(&printLines, "l", 10, "Number of lines to print from the response body")
+type MultipleModeArguments struct {
+	CommonArguments
+	CsvLogFile string
+	Directory  string
+}
 
-	var timeout time.Duration
-	flag.DurationVar(&timeout, "t", 10*time.Second, "timeout")
+var (
+	singleFlagSet   = flag.NewFlagSet("single", flag.ExitOnError)
+	multipleFlagSet = flag.NewFlagSet("multiple", flag.ExitOnError)
+)
 
-	var requestsDirectory string
-	flag.StringVar(&requestsDirectory, "d", "", "directory containing json request files")
+var subcommands = map[string]*flag.FlagSet{
+	singleFlagSet.Name():   singleFlagSet,
+	multipleFlagSet.Name(): multipleFlagSet,
+}
 
-	var proto string
-	flag.StringVar(
-		&proto,
-		"p",
-		"h2",
-		"specifies which protocol to use. Must be one of \"h2\" or \"h3\"",
+func setupCommonFlags() {
+	for _, fs := range subcommands {
+		fs.StringVar(
+			&keyLogFile,
+			"k",
+			"",
+			"filename to log TLS master secrets",
+		)
+
+		fs.StringVar(
+			&proto,
+			"p",
+			"h2",
+			"specifies which protocol to use. Must be one of \"h2\" or \"h3\"",
+		)
+
+		fs.DurationVar(
+			&timeout,
+			"t",
+			10*time.Second,
+			"timeout",
+		)
+	}
+}
+
+func setupSingleModeFlags() {
+	singleFlagSet.IntVar(
+		&printLines,
+		"l",
+		10,
+		"number of lines to print from the response body",
 	)
 
-	flag.Parse()
-	args := flag.Args()
+	singleFlagSet.StringVar(
+		&fileName,
+		"f",
+		"",
+		"filename with request data in json format",
+	)
+}
 
-	if requestsDirectory == "" {
-		return Arguments{}, errors.New("directory with json request files required")
+func setupMultipleModeFlags() {
+	multipleFlagSet.StringVar(
+		&csvLogFile,
+		"csv",
+		"",
+		"filename to log result in csv format",
+	)
+
+	multipleFlagSet.StringVar(
+		&directory,
+		"d",
+		"",
+		"directory containing json request files",
+	)
+}
+
+func GetArguments(osArgs []string) (interface{}, error) {
+	if len(osArgs) < 1 {
+		return nil, errors.New("you must pass a subcommand")
 	}
 
-	var protoInt int
+	setupCommonFlags()
+	setupSingleModeFlags()
+	setupMultipleModeFlags()
+
+	flagSet := subcommands[osArgs[0]]
+	if flagSet == nil {
+		return nil, fmt.Errorf("unknown subcommand '%s'", os.Args[1])
+	}
+
+	err := flagSet.Parse(osArgs[1:])
+	if err != nil {
+		return nil, err
+	}
+
+	args := flagSet.Args()
+
+	var intProto int
 	switch proto {
 	case "h2":
-		protoInt = H2
+		intProto = H2
 	case "h3":
-		protoInt = H3
+		intProto = H3
 	default:
-		return Arguments{}, errors.New(
-			fmt.Sprintf("unknown protocol %v", proto),
-		)
+		return nil, fmt.Errorf("unknown protocol '%s'", proto)
 	}
 
 	if len(args) == 0 {
-		return Arguments{}, errors.New("missing target URL")
+		return nil, errors.New("missing target URL")
 	}
 
 	target, err := url.Parse(args[0])
-
 	if err != nil {
-		return Arguments{}, err
+		return nil, err
 	}
 
-	return Arguments{
-		KeyLogFile:        keyLogFile,
-		PrintLines:        printLines,
-		Proto:             protoInt,
-		Timeout:           timeout,
-		Target:            target,
-		RequestsDirectory: requestsDirectory,
-	}, nil
+	commonArguments := CommonArguments{
+		KeyLogFile: keyLogFile,
+		Proto:      intProto,
+		Timeout:    timeout,
+		Target:     target,
+	}
+
+	if flagSet.Name() == "single" {
+		if fileName == "" {
+			return nil, errors.New("filename required")
+		}
+
+		return SingleModeArguments{
+			CommonArguments: commonArguments,
+			PrintLines:      printLines,
+			FileName:        fileName,
+		}, nil
+	}
+
+	if flagSet.Name() == "multiple" {
+		if csvLogFile == "" {
+			return nil, errors.New("csv log file required")
+		}
+
+		if directory == "" {
+			return nil, errors.New("directory required")
+		}
+
+		return MultipleModeArguments{
+			CommonArguments: commonArguments,
+			CsvLogFile:      csvLogFile,
+			Directory:       directory,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unknown flag set name %s", flagSet.Name())
 }

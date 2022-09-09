@@ -1,3 +1,5 @@
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 golang.org/x/net v0.0.0-20220811182439-13a9a731de15 h1:cik0bxZUSJVDyaHf1hZPSDsU8SZHGQZQMeueXCE7yBQ=
 golang.org/x/net v0.0.0-20220811182439-13a9a731de15/go.mod h1:YDH+HFinaLZZlnHAfSS6ZXJJ9M9t4Dl22yv3iI2vPwk=
 golang.org/x/text v0.3.7 h1:olpwvP2KacW1ZWvsR7uQhoyTYvKAupfQrRGBFM352Gk=

@@ -3,7 +3,6 @@ package http2
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
@@ -76,9 +75,7 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 		}
 
 		if ga, ok := f.(*http2.GoAwayFrame); ok {
-			return utils.HTTPMessage{}, errors.New(
-				fmt.Sprintf("received GOAWAY frame: error code %v", ga.ErrCode),
-			)
+			return utils.HTTPMessage{}, fmt.Errorf("received GOAWAY frame: error code %v", ga.ErrCode)
 		}
 
 		if f.Header().StreamID != 1 {
@@ -105,9 +102,7 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 			bodyRead = f.StreamEnded()
 
 		case *http2.RSTStreamFrame:
-			return utils.HTTPMessage{}, errors.New(
-				fmt.Sprintf("received RST_STREAM frame: error code %v", f.ErrCode),
-			)
+			return utils.HTTPMessage{}, fmt.Errorf("received RST_STREAM frame: error code %v", f.ErrCode)
 		}
 	}
 
