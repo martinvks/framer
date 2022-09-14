@@ -1,10 +1,13 @@
 package utils
 
-import "net/url"
+import (
+	"github.com/Martinvks/httptestrunner/types"
+	"net/url"
+)
 
-func GetRequest(target *url.URL, testCase TestCase) HTTPMessage {
+func GetRequest(target *url.URL, testCase TestCase) types.HttpRequest {
 
-	defaultHeaders := []Header{
+	defaultHeaders := types.Headers{
 		{":authority", target.Host},
 		{":method", testCase.Data.Method},
 		{":path", target.RequestURI()},
@@ -12,7 +15,7 @@ func GetRequest(target *url.URL, testCase TestCase) HTTPMessage {
 		{"x-id", testCase.Id},
 	}
 
-	return HTTPMessage{
+	return types.HttpRequest{
 		Body:    []byte(testCase.Data.Body),
 		Headers: append(defaultHeaders, testCase.Data.Headers...),
 	}

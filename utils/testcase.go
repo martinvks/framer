@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Martinvks/httptestrunner/types"
 	"github.com/google/uuid"
 	"os"
 	"strings"
@@ -16,7 +17,7 @@ type TestCase struct {
 
 type TestCaseData struct {
 	Method  string
-	Headers []Header
+	Headers types.Headers
 	Body    string
 }
 

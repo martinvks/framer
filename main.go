@@ -1,15 +1,16 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"github.com/Martinvks/httptestrunner/http2"
-	"github.com/Martinvks/httptestrunner/utils"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/Martinvks/httptestrunner/arguments"
+	"github.com/Martinvks/httptestrunner/http2"
+	"github.com/Martinvks/httptestrunner/http3"
+	"github.com/Martinvks/httptestrunner/types"
+	"github.com/Martinvks/httptestrunner/utils"
 )
 
 func main() {
@@ -22,8 +23,8 @@ func main() {
 	switch args := args.(type) {
 	case arguments.SingleModeArguments:
 		err = runSingleMode(args)
-	case arguments.MultipleModeArguments:
-		err = runMultipleMode(args)
+	case arguments.MultiModeArguments:
+		err = runMultiMode(args)
 	}
 
 	if err != nil {
@@ -35,7 +36,7 @@ func main() {
 func runSingleMode(args arguments.SingleModeArguments) error {
 	testCase, err := utils.GetSingleTestCase(args.FileName)
 	if err != nil {
-		return fmt.Errorf("error reading request file: %v\n", err)
+		return fmt.Errorf("error reading request file: %w", err)
 	}
 
 	request := utils.GetRequest(args.Target, testCase)
@@ -45,7 +46,7 @@ func runSingleMode(args arguments.SingleModeArguments) error {
 		args.Target,
 		args.Timeout,
 		args.KeyLogFile,
-		request,
+		&request,
 	)
 	if err != nil {
 		return err
@@ -56,22 +57,55 @@ func runSingleMode(args arguments.SingleModeArguments) error {
 	return nil
 }
 
-func runMultipleMode(args arguments.MultipleModeArguments) error {
+func runMultiMode(args arguments.MultiModeArguments) error {
 	testCases, err := utils.GetAllTestCases(args.Directory)
 	if err != nil {
-		return fmt.Errorf("error reading request files: %v\n", err)
+		return fmt.Errorf("error reading request files: %w", err)
+	}
+
+	csvWriter, err := utils.GetCsvWriter(args.CsvLogFile)
+	if err != nil {
+		return fmt.Errorf("error creating csv writer: %w", err)
+	}
+	defer csvWriter.Close()
+
+	err = csvWriter.WriteHeaders()
+	if err != nil {
+		return fmt.Errorf("error writing csv headers: %w", err)
 	}
 
 	for _, testCase := range testCases {
 		request := utils.GetRequest(args.Target, testCase)
+
 		response, err := doRequest(
 			args.Proto,
 			args.Target,
 			args.Timeout,
 			args.KeyLogFile,
-			request,
+			&request,
 		)
-		utils.WriteHttpMessage(response, err)
+
+		requestError := ""
+		if err != nil {
+			requestError = err.Error()
+		}
+
+		responseCode := ""
+		if response != nil {
+			if val, ok := response.Headers.Get(":status"); ok {
+				responseCode = val
+			}
+		}
+
+		err = csvWriter.WriteData(
+			testCase.FileName,
+			testCase.Id,
+			responseCode,
+			requestError,
+		)
+		if err != nil {
+			return fmt.Errorf("error writing csv record: %w", err)
+		}
 	}
 
 	return nil
@@ -82,14 +116,14 @@ func doRequest(
 	target *url.URL,
 	timeout time.Duration,
 	keyLogFile string,
-	request utils.HTTPMessage,
-) (utils.HTTPMessage, error) {
+	request *types.HttpRequest,
+) (*types.HttpResponse, error) {
 	switch proto {
 	case arguments.H2:
 		return http2.SendHTTP2Request(target, timeout, keyLogFile, request)
 	case arguments.H3:
-		return utils.HTTPMessage{}, errors.New("h3 not implemented")
+		return http3.SendHTTP3Request(target, timeout, keyLogFile, request)
 	default:
-		return utils.HTTPMessage{}, fmt.Errorf("unknown proto %d", proto)
+		return nil, fmt.Errorf("unknown proto %d", proto)
 	}
 }

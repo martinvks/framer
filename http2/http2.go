@@ -12,13 +12,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/Martinvks/httptestrunner/types"
 	"github.com/Martinvks/httptestrunner/utils"
 )
 
-func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string, request utils.HTTPMessage) (utils.HTTPMessage, error) {
+func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string, request *types.HttpRequest) (*types.HttpResponse, error) {
 	ip, err := utils.LookUp(target.Hostname())
 	if err != nil {
-		return utils.HTTPMessage{}, err
+		return nil, err
 	}
 
 	port := target.Port()
@@ -28,7 +29,7 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 
 	tcpConn, err := net.DialTimeout("tcp", net.JoinHostPort(ip.String(), port), timeout)
 	if err != nil {
-		return utils.HTTPMessage{}, err
+		return nil, err
 	}
 	defer func() {
 		_ = tcpConn.Close()
@@ -39,7 +40,7 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 	if keyLogFile != "" {
 		keyLogWriter, err = os.OpenFile(keyLogFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
-			return utils.HTTPMessage{}, err
+			return nil, err
 		}
 	}
 
@@ -51,14 +52,14 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 	})
 
 	if _, err := c.Write(prepareHTTP2Request(request)); err != nil {
-		return utils.HTTPMessage{}, err
+		return nil, err
 	}
 
-	response := utils.HTTPMessage{}
+	response := types.HttpResponse{}
 	headersDecoder := hpack.NewDecoder(^uint32(0), func(f hpack.HeaderField) {
 		response.Headers = append(
 			response.Headers,
-			utils.Header{Name: f.Name, Value: f.Value},
+			types.Header{Name: f.Name, Value: f.Value},
 		)
 	})
 
@@ -71,11 +72,11 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 		var f http2.Frame
 		f, err = framer.ReadFrame()
 		if err != nil {
-			return utils.HTTPMessage{}, err
+			return nil, err
 		}
 
 		if ga, ok := f.(*http2.GoAwayFrame); ok {
-			return utils.HTTPMessage{}, fmt.Errorf("received GOAWAY frame: error code %v", ga.ErrCode)
+			return nil, fmt.Errorf("received GOAWAY frame: error code %v", ga.ErrCode)
 		}
 
 		if f.Header().StreamID != 1 {
@@ -85,14 +86,14 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 		switch f := f.(type) {
 		case *http2.HeadersFrame:
 			if _, err := headersDecoder.Write(f.HeaderBlockFragment()); err != nil {
-				return utils.HTTPMessage{}, err
+				return nil, err
 			}
 			headersDone = f.HeadersEnded()
 			hasBody = !f.StreamEnded()
 
 		case *http2.ContinuationFrame:
 			if _, err := headersDecoder.Write(f.HeaderBlockFragment()); err != nil {
-				return utils.HTTPMessage{}, err
+				return nil, err
 			}
 			headersDone = f.HeadersEnded()
 
@@ -102,14 +103,14 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 			bodyRead = f.StreamEnded()
 
 		case *http2.RSTStreamFrame:
-			return utils.HTTPMessage{}, fmt.Errorf("received RST_STREAM frame: error code %v", f.ErrCode)
+			return nil, fmt.Errorf("received RST_STREAM frame: error code %v", f.ErrCode)
 		}
 	}
 
-	return response, nil
+	return &response, nil
 }
 
-func prepareHTTP2Request(request utils.HTTPMessage) []byte {
+func prepareHTTP2Request(request *types.HttpRequest) []byte {
 	var hpackBuf []byte
 	for i := range request.Headers {
 		hpackBuf = hpackAppendHeader(hpackBuf, &request.Headers[i])
@@ -130,7 +131,7 @@ func prepareHTTP2Request(request utils.HTTPMessage) []byte {
 	_ = framer.WriteHeaders(http2.HeadersFrameParam{
 		StreamID:      1,
 		BlockFragment: hpackBuf,
-		EndStream:     len(request.Body) == 0,
+		EndStream:     !request.HasBody(),
 		EndHeaders:    true,
 	})
 
@@ -149,7 +150,7 @@ func prepareHTTP2Request(request utils.HTTPMessage) []byte {
 	return requestBuf.Bytes()
 }
 
-func hpackAppendHeader(dst []byte, h *utils.Header) []byte {
+func hpackAppendHeader(dst []byte, h *types.Header) []byte {
 	dst = append(dst, 0x10)
 	dst = hpackAppendVarInt(dst, 7, uint64(len(h.Name)))
 	dst = append(dst, h.Name...)

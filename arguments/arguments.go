@@ -39,20 +39,20 @@ type SingleModeArguments struct {
 	FileName   string
 }
 
-type MultipleModeArguments struct {
+type MultiModeArguments struct {
 	CommonArguments
 	CsvLogFile string
 	Directory  string
 }
 
 var (
-	singleFlagSet   = flag.NewFlagSet("single", flag.ExitOnError)
-	multipleFlagSet = flag.NewFlagSet("multiple", flag.ExitOnError)
+	singleFlagSet = flag.NewFlagSet("single", flag.ExitOnError)
+	multiFlagSet  = flag.NewFlagSet("multi", flag.ExitOnError)
 )
 
 var subcommands = map[string]*flag.FlagSet{
-	singleFlagSet.Name():   singleFlagSet,
-	multipleFlagSet.Name(): multipleFlagSet,
+	singleFlagSet.Name(): singleFlagSet,
+	multiFlagSet.Name():  multiFlagSet,
 }
 
 func setupCommonFlags() {
@@ -96,15 +96,15 @@ func setupSingleModeFlags() {
 	)
 }
 
-func setupMultipleModeFlags() {
-	multipleFlagSet.StringVar(
+func setupMultiModeFlags() {
+	multiFlagSet.StringVar(
 		&csvLogFile,
 		"csv",
 		"",
-		"filename to log result in csv format",
+		"filename to log result in csv format. if not set, the result will be printed to console.",
 	)
 
-	multipleFlagSet.StringVar(
+	multiFlagSet.StringVar(
 		&directory,
 		"d",
 		"",
@@ -119,7 +119,7 @@ func GetArguments(osArgs []string) (interface{}, error) {
 
 	setupCommonFlags()
 	setupSingleModeFlags()
-	setupMultipleModeFlags()
+	setupMultiModeFlags()
 
 	flagSet := subcommands[osArgs[0]]
 	if flagSet == nil {
@@ -171,16 +171,12 @@ func GetArguments(osArgs []string) (interface{}, error) {
 		}, nil
 	}
 
-	if flagSet.Name() == "multiple" {
-		if csvLogFile == "" {
-			return nil, errors.New("csv log file required")
-		}
-
+	if flagSet.Name() == "multi" {
 		if directory == "" {
 			return nil, errors.New("directory required")
 		}
 
-		return MultipleModeArguments{
+		return MultiModeArguments{
 			CommonArguments: commonArguments,
 			CsvLogFile:      csvLogFile,
 			Directory:       directory,
