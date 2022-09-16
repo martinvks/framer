@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"os"
 	"strconv"
 	"time"
 
@@ -19,7 +18,7 @@ import (
 	"github.com/marten-seemann/qpack"
 )
 
-func SendHTTP3Request(target *url.URL, timeout time.Duration, keyLogFile string, request *types.HttpRequest) (*types.HttpResponse, error) {
+func SendHTTP3Request(target *url.URL, timeout time.Duration, keyLogWriter io.Writer, request *types.HttpRequest) (*types.HttpResponse, error) {
 	ip, err := utils.LookUp(target.Hostname())
 	if err != nil {
 		return nil, err
@@ -52,14 +51,6 @@ func SendHTTP3Request(target *url.URL, timeout time.Duration, keyLogFile string,
 	udpAddr := &net.UDPAddr{
 		IP:   ip,
 		Port: portInt,
-	}
-
-	var keyLogWriter io.Writer
-	if keyLogFile != "" {
-		keyLogWriter, err = os.OpenFile(keyLogFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	tlsConfig := &tls.Config{

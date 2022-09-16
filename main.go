@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"time"
@@ -16,7 +17,7 @@ import (
 func main() {
 	args, err := arguments.GetArguments(os.Args[1:])
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error parsing arguments: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "error parsing arguments: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, err.Error())
+		_, _ = fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 }
@@ -41,11 +42,16 @@ func runSingleMode(args arguments.SingleModeArguments) error {
 
 	request := utils.GetRequest(args.Target, testCase)
 
+	keyLogWriter, err := getKeyLogWriter(args.KeyLogFile)
+	if err != nil {
+		return fmt.Errorf("error creating key log writer: %w", err)
+	}
+
 	response, err := doRequest(
 		args.Proto,
 		args.Target,
 		args.Timeout,
-		args.KeyLogFile,
+		keyLogWriter,
 		&request,
 	)
 	if err != nil {
@@ -61,6 +67,11 @@ func runMultiMode(args arguments.MultiModeArguments) error {
 	testCases, err := utils.GetAllTestCases(args.Directory)
 	if err != nil {
 		return fmt.Errorf("error reading request files: %w", err)
+	}
+
+	keyLogWriter, err := getKeyLogWriter(args.KeyLogFile)
+	if err != nil {
+		return fmt.Errorf("error creating key log writer: %w", err)
 	}
 
 	csvWriter, err := utils.GetCsvWriter(args.CsvLogFile)
@@ -81,7 +92,7 @@ func runMultiMode(args arguments.MultiModeArguments) error {
 			args.Proto,
 			args.Target,
 			args.Timeout,
-			args.KeyLogFile,
+			keyLogWriter,
 			&request,
 		)
 
@@ -115,15 +126,22 @@ func doRequest(
 	proto int,
 	target *url.URL,
 	timeout time.Duration,
-	keyLogFile string,
+	keyLogWriter io.Writer,
 	request *types.HttpRequest,
 ) (*types.HttpResponse, error) {
 	switch proto {
 	case arguments.H2:
-		return http2.SendHTTP2Request(target, timeout, keyLogFile, request)
+		return http2.SendHTTP2Request(target, timeout, keyLogWriter, request)
 	case arguments.H3:
-		return http3.SendHTTP3Request(target, timeout, keyLogFile, request)
+		return http3.SendHTTP3Request(target, timeout, keyLogWriter, request)
 	default:
 		return nil, fmt.Errorf("unknown proto %d", proto)
 	}
+}
+
+func getKeyLogWriter(filename string) (io.Writer, error) {
+	if filename != "" {
+		return os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	}
+	return nil, nil
 }

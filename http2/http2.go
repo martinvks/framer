@@ -9,14 +9,13 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/Martinvks/httptestrunner/types"
 	"github.com/Martinvks/httptestrunner/utils"
 )
 
-func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string, request *types.HttpRequest) (*types.HttpResponse, error) {
+func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogWriter io.Writer, request *types.HttpRequest) (*types.HttpResponse, error) {
 	ip, err := utils.LookUp(target.Hostname())
 	if err != nil {
 		return nil, err
@@ -35,14 +34,6 @@ func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogFile string,
 		_ = tcpConn.Close()
 	}()
 	_ = tcpConn.SetDeadline(time.Now().Add(timeout))
-
-	var keyLogWriter io.Writer
-	if keyLogFile != "" {
-		keyLogWriter, err = os.OpenFile(keyLogFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	c := tls.Client(tcpConn, &tls.Config{
 		NextProtos:         []string{"h2"},
