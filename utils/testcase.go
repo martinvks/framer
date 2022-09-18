@@ -3,10 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
+
 	"github.com/Martinvks/httptestrunner/types"
 	"github.com/google/uuid"
-	"os"
-	"strings"
 )
 
 type TestCase struct {
@@ -78,17 +80,29 @@ func getJsonEntries(directory string) ([]os.DirEntry, error) {
 
 func unmarshalTestCaseData(fileName string) (TestCaseData, error) {
 	content, err := os.ReadFile(fileName)
-
 	if err != nil {
 		return TestCaseData{}, err
 	}
 
+	contentWithEnv := replaceWithEnvironmentVariables(content)
+
 	data := TestCaseData{}
-	err = json.Unmarshal(content, &data)
+	err = json.Unmarshal(contentWithEnv, &data)
 
 	if err != nil {
 		return TestCaseData{}, err
 	}
 
 	return data, nil
+}
+
+// replaces all occurrences of "${<ENVIRONMENT_VARIABLE_KEY>}" with "<ENVIRONMENT_VARIABLE_VALUE>"
+func replaceWithEnvironmentVariables(fileContent []byte) []byte {
+	re := regexp.MustCompile(`"\$\{([^="]+)}"`)
+
+	return re.ReplaceAllFunc(fileContent, func(templateMatch []byte) []byte {
+		parts := re.FindSubmatch(templateMatch)
+		env := os.Getenv(string(parts[1]))
+		return []byte(fmt.Sprintf(`"%s"`, env))
+	})
 }
