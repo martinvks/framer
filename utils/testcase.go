@@ -18,9 +18,10 @@ type TestCase struct {
 }
 
 type TestCaseData struct {
-	Method  string
-	Headers types.Headers
-	Body    string
+	Method       string
+	Headers      types.Headers
+	Continuation types.Headers
+	Body         string
 }
 
 func GetSingleTestCase(fileName string) (TestCase, error) {

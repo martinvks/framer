@@ -16,7 +16,8 @@ func GetRequest(target *url.URL, testCase TestCase) types.HttpRequest {
 	}
 
 	return types.HttpRequest{
-		Body:    []byte(testCase.Data.Body),
-		Headers: append(defaultHeaders, testCase.Data.Headers...),
+		Headers:      append(defaultHeaders, testCase.Data.Headers...),
+		Continuation: testCase.Data.Continuation,
+		Body:         []byte(testCase.Data.Body),
 	}
 }
