@@ -14,13 +14,14 @@ import (
 type TestCase struct {
 	Id       string
 	FileName string
-	Data     TestCaseData
+	TestCaseData
 }
 
 type TestCaseData struct {
 	Method       string
 	Headers      types.Headers
 	Continuation types.Headers
+	Trailer      types.Headers
 	Body         string
 }
 
@@ -31,9 +32,9 @@ func GetSingleTestCase(fileName string) (TestCase, error) {
 	}
 
 	return TestCase{
-		Id:       uuid.NewString(),
-		FileName: fileName,
-		Data:     data,
+		Id:           uuid.NewString(),
+		FileName:     fileName,
+		TestCaseData: data,
 	}, nil
 }
 
@@ -50,9 +51,9 @@ func GetAllTestCases(directory string) ([]TestCase, error) {
 			return nil, err
 		}
 		testCases = append(testCases, TestCase{
-			Id:       uuid.NewString(),
-			FileName: entry.Name(),
-			Data:     data,
+			Id:           uuid.NewString(),
+			FileName:     entry.Name(),
+			TestCaseData: data,
 		})
 	}
 
@@ -97,7 +98,7 @@ func unmarshalTestCaseData(fileName string) (TestCaseData, error) {
 	return data, nil
 }
 
-// replaces all occurrences of "${<ENVIRONMENT_VARIABLE_KEY>}" with "<ENVIRONMENT_VARIABLE_VALUE>"
+// replaces all occurrences of "${ENVIRONMENT_VARIABLE_KEY}" with "ENVIRONMENT_VARIABLE_VALUE"
 func replaceWithEnvironmentVariables(fileContent []byte) []byte {
 	re := regexp.MustCompile(`"\$\{([^="]+)}"`)
 

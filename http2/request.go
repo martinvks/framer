@@ -12,7 +12,7 @@ const (
 	maxFrameSizeOctets                    int    = 16384
 	maxWindowSize                         uint32 = (1 << 31) - 1
 	initialFlowControlWindow              uint32 = (1 << 16) - 1
-	windowSizeIncrement                   uint32 = maxWindowSize - initialFlowControlWindow
+	windowSizeIncrement                          = maxWindowSize - initialFlowControlWindow
 	literalHeaderFieldNeverIndexedNewName byte   = 0x10
 )
 
@@ -42,7 +42,7 @@ func getRequestBytes(request *types.HttpRequest) []byte {
 	_ = framer.WriteHeaders(http2.HeadersFrameParam{
 		StreamID:      1,
 		BlockFragment: hpackEncodeHeaders(request.Headers),
-		EndStream:     !request.HasBody(),
+		EndStream:     !request.HasBody() && !request.HasTrailerSection(),
 		EndHeaders:    !request.HasContinuationHeaders(),
 	})
 
@@ -63,11 +63,20 @@ func getRequestBytes(request *types.HttpRequest) []byte {
 			}
 			_ = framer.WriteData(
 				1,
-				end == len(request.Body),
+				end == len(request.Body) && !request.HasTrailerSection(),
 				request.Body[start:end],
 			)
 			start = end
 		}
+	}
+
+	if request.HasTrailerSection() {
+		_ = framer.WriteHeaders(http2.HeadersFrameParam{
+			StreamID:      1,
+			BlockFragment: hpackEncodeHeaders(request.Trailer),
+			EndStream:     true,
+			EndHeaders:    true,
+		})
 	}
 
 	_ = framer.WriteSettingsAck()
