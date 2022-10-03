@@ -18,11 +18,12 @@ type TestCase struct {
 }
 
 type TestCaseData struct {
-	Method       string
-	Headers      types.Headers
-	Continuation types.Headers
-	Trailer      types.Headers
-	Body         string
+	Method            string
+	AddDefaultHeaders bool
+	Headers           types.Headers
+	Continuation      types.Headers
+	Trailer           types.Headers
+	Body              string
 }
 
 func GetSingleTestCase(fileName string) (TestCase, error) {
@@ -88,7 +89,9 @@ func unmarshalTestCaseData(fileName string) (TestCaseData, error) {
 
 	contentWithEnv := replaceWithEnvironmentVariables(content)
 
-	data := TestCaseData{}
+	data := TestCaseData{
+		AddDefaultHeaders: true,
+	}
 	err = json.Unmarshal(contentWithEnv, &data)
 
 	if err != nil {
