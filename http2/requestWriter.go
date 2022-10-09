@@ -17,13 +17,6 @@ const (
 )
 
 func writeRequest(tlsConn *tls.Conn, request *types.HttpRequest) error {
-	requestBytes := getRequestBytes(request)
-
-	_, err := tlsConn.Write(requestBytes)
-	return err
-}
-
-func getRequestBytes(request *types.HttpRequest) []byte {
 	requestBuf := bytes.NewBuffer(nil)
 	requestBuf.Write([]byte(http2.ClientPreface))
 
@@ -81,7 +74,8 @@ func getRequestBytes(request *types.HttpRequest) []byte {
 
 	_ = framer.WriteSettingsAck()
 
-	return requestBuf.Bytes()
+	_, err := tlsConn.Write(requestBuf.Bytes())
+	return err
 }
 
 func hpackEncodeHeaders(headers types.Headers) []byte {

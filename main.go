@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"os"
 	"time"
@@ -47,11 +48,17 @@ func runSingleMode(args arguments.SingleModeArguments) error {
 		return fmt.Errorf("error creating key log writer: %w", err)
 	}
 
+	ip, err := utils.LookUp(args.Target.Hostname())
+	if err != nil {
+		return err
+	}
+
 	response, err := doRequest(
 		args.Proto,
 		args.Target,
 		args.Timeout,
 		keyLogWriter,
+		ip,
 		&request,
 	)
 	if err != nil {
@@ -74,6 +81,11 @@ func runMultiMode(args arguments.MultiModeArguments) error {
 		return fmt.Errorf("error creating key log writer: %w", err)
 	}
 
+	ip, err := utils.LookUp(args.Target.Hostname())
+	if err != nil {
+		return err
+	}
+
 	csvWriter, err := utils.GetCsvWriter(args.CsvLogFile)
 	if err != nil {
 		return fmt.Errorf("error creating csv writer: %w", err)
@@ -93,6 +105,7 @@ func runMultiMode(args arguments.MultiModeArguments) error {
 			args.Target,
 			args.Timeout,
 			keyLogWriter,
+			ip,
 			&request,
 		)
 
@@ -127,13 +140,14 @@ func doRequest(
 	target *url.URL,
 	timeout time.Duration,
 	keyLogWriter io.Writer,
+	ip net.IP,
 	request *types.HttpRequest,
 ) (*types.HttpResponse, error) {
 	switch proto {
 	case arguments.H2:
-		return http2.SendHTTP2Request(target, timeout, keyLogWriter, request)
+		return http2.SendHTTP2Request(ip, target, timeout, keyLogWriter, request)
 	case arguments.H3:
-		return http3.SendHTTP3Request(target, timeout, keyLogWriter, request)
+		return http3.SendHTTP3Request(ip, target, timeout, keyLogWriter, request)
 	default:
 		return nil, fmt.Errorf("unknown proto %d", proto)
 	}

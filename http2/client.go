@@ -8,15 +8,15 @@ import (
 	"time"
 
 	"github.com/Martinvks/httptestrunner/types"
-	"github.com/Martinvks/httptestrunner/utils"
 )
 
-func SendHTTP2Request(target *url.URL, timeout time.Duration, keyLogWriter io.Writer, request *types.HttpRequest) (*types.HttpResponse, error) {
-	ip, err := utils.LookUp(target.Hostname())
-	if err != nil {
-		return nil, err
-	}
-
+func SendHTTP2Request(
+	ip net.IP,
+	target *url.URL,
+	timeout time.Duration,
+	keyLogWriter io.Writer,
+	request *types.HttpRequest,
+) (*types.HttpResponse, error) {
 	port := target.Port()
 	if port == "" {
 		port = "443"
