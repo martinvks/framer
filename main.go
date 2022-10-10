@@ -19,6 +19,7 @@ func main() {
 	args, err := arguments.GetArguments(os.Args[1:])
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "error parsing arguments: %v\n", err)
+		arguments.Usage()
 		os.Exit(1)
 	}
 
@@ -41,7 +42,7 @@ func runSingleMode(args arguments.SingleModeArguments) error {
 		return fmt.Errorf("error reading request file: %w", err)
 	}
 
-	request := utils.GetRequest(args.Target, testCase)
+	request := utils.GetRequest(args.Proto, args.Target, testCase)
 
 	keyLogWriter, err := getKeyLogWriter(args.KeyLogFile)
 	if err != nil {
@@ -98,7 +99,7 @@ func runMultiMode(args arguments.MultiModeArguments) error {
 	}
 
 	for _, testCase := range testCases {
-		request := utils.GetRequest(args.Target, testCase)
+		request := utils.GetRequest(args.Proto, args.Target, testCase)
 
 		response, err := doRequest(
 			args.Proto,

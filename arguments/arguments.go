@@ -55,6 +55,28 @@ var subcommands = map[string]*flag.FlagSet{
 	multiFlagSet.Name():  multiFlagSet,
 }
 
+func Usage() {
+	w := flag.CommandLine.Output()
+	_, _ = fmt.Fprintf(w, "Usage: httptestrunner <mode> <flags> <target>\n\n")
+	_, _ = fmt.Fprintf(w, "Modes:\n")
+	_, _ = fmt.Fprintf(w, "single\tsend a single request to the target\n")
+	_, _ = fmt.Fprintf(w, "multi\tsend multiple requests to the target\n\n")
+	_, _ = fmt.Fprintf(w, "Run 'httptestrunner <mode> -h' for more information\n")
+}
+
+func setupSubcommandUsage() {
+	for _, fs := range subcommands {
+		fs.Usage = func() {
+			w := fs.Output()
+			_, _ = fmt.Fprintf(w, "Usage: httptestrunner %s <flags> <target>\n\n", fs.Name())
+			_, _ = fmt.Fprintf(w, "Flags:\n")
+			fs.PrintDefaults()
+			_, _ = fmt.Fprintf(w, "\nTarget:\n")
+			_, _ = fmt.Fprintf(w, "The target URL. e.g. https://example.com\n\n")
+		}
+	}
+}
+
 func setupCommonFlags() {
 	for _, fs := range subcommands {
 		fs.StringVar(
@@ -101,7 +123,7 @@ func setupMultiModeFlags() {
 		&csvLogFile,
 		"csv",
 		"",
-		"filename to log result in csv format. if not set, the result will be printed to console.",
+		"filename to log result in csv format. if not set, the result will be printed to console",
 	)
 
 	multiFlagSet.StringVar(
@@ -114,16 +136,17 @@ func setupMultiModeFlags() {
 
 func GetArguments(osArgs []string) (interface{}, error) {
 	if len(osArgs) < 1 {
-		return nil, errors.New("you must pass a subcommand")
+		return nil, errors.New("you must select a mode")
 	}
 
+	setupSubcommandUsage()
 	setupCommonFlags()
 	setupSingleModeFlags()
 	setupMultiModeFlags()
 
 	flagSet := subcommands[osArgs[0]]
 	if flagSet == nil {
-		return nil, fmt.Errorf("unknown subcommand '%s'", os.Args[1])
+		return nil, fmt.Errorf("unknown mode '%s'", os.Args[1])
 	}
 
 	err := flagSet.Parse(osArgs[1:])
@@ -183,5 +206,5 @@ func GetArguments(osArgs []string) (interface{}, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("unknown flag set name %s", flagSet.Name())
+	panic(fmt.Sprintf("unknown flag set name %s", flagSet.Name()))
 }
