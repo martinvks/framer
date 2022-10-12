@@ -64,16 +64,14 @@ func Usage() {
 	_, _ = fmt.Fprintf(w, "Run 'httptestrunner <mode> -h' for more information\n")
 }
 
-func setupSubcommandUsage() {
-	for _, fs := range subcommands {
-		fs.Usage = func() {
-			w := fs.Output()
-			_, _ = fmt.Fprintf(w, "Usage: httptestrunner %s <flags> <target>\n\n", fs.Name())
-			_, _ = fmt.Fprintf(w, "Flags:\n")
-			fs.PrintDefaults()
-			_, _ = fmt.Fprintf(w, "\nTarget:\n")
-			_, _ = fmt.Fprintf(w, "The target URL. e.g. https://example.com\n\n")
-		}
+func setupSubcommandUsage(fs *flag.FlagSet) {
+	fs.Usage = func() {
+		w := fs.Output()
+		_, _ = fmt.Fprintf(w, "Usage: httptestrunner %s <flags> <target>\n\n", fs.Name())
+		_, _ = fmt.Fprintf(w, "Flags:\n")
+		fs.PrintDefaults()
+		_, _ = fmt.Fprintf(w, "\nTarget:\n")
+		_, _ = fmt.Fprintf(w, "The target URL. e.g. https://example.com\n\n")
 	}
 }
 
@@ -139,10 +137,13 @@ func GetArguments(osArgs []string) (interface{}, error) {
 		return nil, errors.New("you must select a mode")
 	}
 
-	setupSubcommandUsage()
 	setupCommonFlags()
 	setupSingleModeFlags()
 	setupMultiModeFlags()
+
+	for _, fs := range subcommands {
+		setupSubcommandUsage(fs)
+	}
 
 	flagSet := subcommands[osArgs[0]]
 	if flagSet == nil {
