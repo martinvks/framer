@@ -8,8 +8,13 @@ import (
 	"github.com/Martinvks/httptestrunner/types"
 )
 
-func GetRequest(proto int, target *url.URL, testCase TestCase) types.HttpRequest {
-	headers := getHeaders(target, testCase)
+func GetRequest(
+	idQuery bool,
+	proto int,
+	target *url.URL,
+	testCase TestCase,
+) types.HttpRequest {
+	headers := getHeaders(target, idQuery, testCase)
 	continuation := getContinuationHeaders(proto, testCase)
 
 	return types.HttpRequest{
@@ -20,10 +25,16 @@ func GetRequest(proto int, target *url.URL, testCase TestCase) types.HttpRequest
 	}
 }
 
-func getHeaders(target *url.URL, testCase TestCase) types.Headers {
+func getHeaders(target *url.URL, idQuery bool, testCase TestCase) types.Headers {
 	var headers types.Headers
 
 	if testCase.AddDefaultHeaders {
+		if idQuery {
+			query := target.Query()
+			query.Set("id", testCase.Id)
+			target.RawQuery = query.Encode()
+		}
+
 		headers = types.Headers{
 			{":authority", target.Host},
 			{":method", testCase.Method},

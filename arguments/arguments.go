@@ -15,6 +15,7 @@ const (
 )
 
 var (
+	idQuery    bool
 	keyLogFile string
 	proto      string
 	timeout    time.Duration
@@ -27,6 +28,7 @@ var (
 )
 
 type CommonArguments struct {
+	IdQuery    bool
 	KeyLogFile string
 	Proto      int
 	Timeout    time.Duration
@@ -77,6 +79,13 @@ func setupSubcommandUsage(fs *flag.FlagSet) {
 
 func setupCommonFlags() {
 	for _, fs := range subcommands {
+		fs.BoolVar(
+			&idQuery,
+			"id_query",
+			false,
+			"add query parameter with name \"id\" and a uuid v4 value to avoid cached responses",
+		)
+
 		fs.StringVar(
 			&keyLogFile,
 			"k",
@@ -177,6 +186,7 @@ func GetArguments(osArgs []string) (interface{}, error) {
 	}
 
 	commonArguments := CommonArguments{
+		IdQuery:    idQuery,
 		KeyLogFile: keyLogFile,
 		Proto:      intProto,
 		Timeout:    timeout,

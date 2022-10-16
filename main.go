@@ -42,7 +42,7 @@ func runSingleMode(args arguments.SingleModeArguments) error {
 		return fmt.Errorf("error reading request file: %w", err)
 	}
 
-	request := utils.GetRequest(args.Proto, args.Target, testCase)
+	request := utils.GetRequest(args.IdQuery, args.Proto, args.Target, testCase)
 
 	keyLogWriter, err := getKeyLogWriter(args.KeyLogFile)
 	if err != nil {
@@ -99,7 +99,7 @@ func runMultiMode(args arguments.MultiModeArguments) error {
 	}
 
 	for _, testCase := range testCases {
-		request := utils.GetRequest(args.Proto, args.Target, testCase)
+		request := utils.GetRequest(args.IdQuery, args.Proto, args.Target, testCase)
 
 		response, err := doRequest(
 			args.Proto,
