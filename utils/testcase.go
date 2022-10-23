@@ -18,7 +18,6 @@ type TestCase struct {
 }
 
 type TestCaseData struct {
-	Method            string
 	AddDefaultHeaders bool
 	Headers           types.Headers
 	Continuation      types.Headers

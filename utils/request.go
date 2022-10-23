@@ -37,7 +37,7 @@ func getHeaders(target *url.URL, idQuery bool, testCase TestCase) types.Headers 
 
 		headers = types.Headers{
 			{":authority", target.Host},
-			{":method", testCase.Method},
+			{":method", "GET"},
 			{":path", target.RequestURI()},
 			{":scheme", "https"},
 		}
