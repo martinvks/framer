@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/Martinvks/httptestrunner/arguments"
 	"github.com/Martinvks/httptestrunner/types"
 )
 
 func GetRequest(
-	idQuery bool,
+	addIdHeader bool,
+	addIdQuery bool,
 	proto int,
 	target *url.URL,
 	testCase TestCase,
 ) types.HttpRequest {
-	headers := getHeaders(target, idQuery, testCase)
+	headers := getHeaders(target, addIdHeader, addIdQuery, testCase)
 	continuation := getContinuationHeaders(proto, testCase)
 
 	return types.HttpRequest{
@@ -25,11 +25,11 @@ func GetRequest(
 	}
 }
 
-func getHeaders(target *url.URL, idQuery bool, testCase TestCase) types.Headers {
+func getHeaders(target *url.URL, addIdHeader bool, addIdQuery bool, testCase TestCase) types.Headers {
 	var headers types.Headers
 
 	if testCase.AddDefaultHeaders {
-		if idQuery {
+		if addIdQuery {
 			query := target.Query()
 			query.Set("id", testCase.Id)
 			target.RawQuery = query.Encode()
@@ -63,7 +63,9 @@ func getHeaders(target *url.URL, idQuery bool, testCase TestCase) types.Headers 
 		headers = testCase.Headers
 	}
 
-	headers = append(headers, types.Header{Name: "x-id", Value: testCase.Id})
+	if addIdHeader {
+		headers = append(headers, types.Header{Name: "x-id", Value: testCase.Id})
+	}
 
 	return headers
 }
@@ -72,9 +74,9 @@ func getContinuationHeaders(proto int, testCase TestCase) types.Headers {
 	var continuation types.Headers
 
 	switch proto {
-	case arguments.H2:
+	case types.H2:
 		continuation = testCase.Continuation
-	case arguments.H3:
+	case types.H3:
 		if len(testCase.Continuation) > 0 {
 			fmt.Printf("WARN: continuation headers not supported for HTTP/3 and will be ignored\n")
 		}

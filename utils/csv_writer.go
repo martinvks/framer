@@ -7,10 +7,11 @@ import (
 )
 
 type CsvWriter struct {
-	writer *csv.Writer
+	addIdField bool
+	writer     *csv.Writer
 }
 
-func GetCsvWriter(filename string) (CsvWriter, error) {
+func GetCsvWriter(filename string, addIdField bool) (CsvWriter, error) {
 	var writer io.Writer
 
 	if filename == "" {
@@ -24,17 +25,25 @@ func GetCsvWriter(filename string) (CsvWriter, error) {
 	}
 
 	return CsvWriter{
-		writer: csv.NewWriter(writer),
+		addIdField: addIdField,
+		writer:     csv.NewWriter(writer),
 	}, nil
 }
 
 func (w CsvWriter) WriteHeaders() error {
-	return w.writer.Write([]string{
+	var headers []string
+	if w.addIdField {
+		headers = append(headers, "request_id")
+	}
+
+	headers = append(
+		headers,
 		"filename",
-		"request_id",
 		"response_code",
 		"error",
-	})
+	)
+
+	return w.writer.Write(headers)
 }
 
 func (w CsvWriter) WriteData(
@@ -43,12 +52,19 @@ func (w CsvWriter) WriteData(
 	responseCode string,
 	error string,
 ) error {
-	return w.writer.Write([]string{
+	var row []string
+	if w.addIdField {
+		row = append(row, requestId)
+	}
+
+	row = append(
+		row,
 		testFilename,
-		requestId,
 		responseCode,
 		error,
-	})
+	)
+
+	return w.writer.Write(row)
 }
 
 func (w CsvWriter) Close() {

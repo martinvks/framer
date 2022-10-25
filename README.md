@@ -1,6 +1,6 @@
 # httptestrunner
 
-An HTTP client for sending malformed HTTP/2 and HTTP/3 requests.  
+An HTTP client for sending (possibly malformed) HTTP/2 and HTTP/3 requests.  
 Based on [http2smugl](https://github.com/neex/http2smugl) written by Emil Lerner.
 
 ## Installation
@@ -11,10 +11,26 @@ go install github.com/Martinvks/httptestrunner@latest
 
 ## Usage
 
-For information about usage, run:
+For information about available flags, run:
 
 ```
-httptestrunner
+httptestrunner --help
+```
+
+### Single command
+
+Sends a single request to the target URL and prints the response to console
+
+```
+httptestrunner single -f ./request.json https://martinvks.no
+```
+
+### Multi command
+
+Sends multiple requests to the target URL and prints the response status code or error to console
+
+```
+httptestrunner multi -d ./pseudo-headers https://martinvks.no
 ```
 
 ## JSON request files
@@ -27,9 +43,13 @@ Requests are defined in JSON files
     {
       "name": ":method",
       "value": "POST"
+    },
+    {
+      "name": "content-type",
+      "value": "application/x-www-form-urlencoded"
     }
   ],
-  "body": "hello"
+  "body": "param=hello"
 }
 ```
 
@@ -72,19 +92,24 @@ Environment variables can be used with the `"${ENVIRONMENT_VARIABLE_KEY}"` synta
   ]
 }
 ```
-`\r`, `\n` and `\u0000` special characters can be used in the body, header field names and header field values
+Control characters can be added to header field names, header field values and the body by escaping them.  
+See the [JSON RFC](https://www.rfc-editor.org/rfc/rfc8259.html#section-7) for more details.
 ```json
 {
   "headers": [
     {
-      "name": "x-example",
+      "name": "x-smuggle-header",
       "value": "foo\r\nx-another-header: bar"
+    },
+    {
+      "name": "x-null-byte",
+      "value": "ab\u0000c"
     }
   ]
 }
 ```
-When `addDefaultHeaders` is true, adding a pseudo-header with the same name to `headers` will replace the default value.  
-Any extra pseudo-headers will be added to the HEADERS frame.  
+When `addDefaultHeaders` is true, default values can be replaced by adding a header field with the pseudo-header name to `headers`.
+Any extra pseudo-headers will be added to the HEADERS frame.
 For example sending two `:path` header fields can be done with:
 ```json
 {
