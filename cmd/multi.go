@@ -3,25 +3,36 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/Martinvks/httptestrunner/client"
 	"github.com/Martinvks/httptestrunner/utils"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
 type multiArguments struct {
-	logFile   string
-	directory string
+	addIdQuery bool
+	delay      time.Duration
+	directory  string
 }
 
 var multiArgs multiArguments
 
 func init() {
-	multiCmd.Flags().StringVar(
-		&multiArgs.logFile,
-		"logfile",
-		"",
-		"filename to log result in csv format. if not set, the result will be printed to console",
+	multiCmd.Flags().BoolVar(
+		&multiArgs.addIdQuery,
+		"id-query",
+		false,
+		"add a query parameter with name \"id\" and a uuid v4 value to avoid cached responses",
+	)
+
+	multiCmd.Flags().DurationVar(
+		&multiArgs.delay,
+		"delay",
+		0,
+		"duration to wait between each request",
 	)
 
 	multiCmd.Flags().StringVarP(
@@ -39,7 +50,7 @@ func init() {
 
 var multiCmd = &cobra.Command{
 	Use:     "multi [flags] target",
-	Short:   "Send multiple requests to the target",
+	Short:   "Send multiple requests to the target URL and print the response status code or error to console",
 	Example: "httptestrunner multi -d ./requests https://martinvks.no",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -67,24 +78,22 @@ func runMultiCmd() error {
 		return err
 	}
 
-	csvWriter, err := utils.GetCsvWriter(multiArgs.logFile, commonArgs.addIdHeader)
-	if err != nil {
-		return fmt.Errorf("error creating csv writer: %w", err)
-	}
-	defer csvWriter.Close()
-
-	err = csvWriter.WriteHeaders()
-	if err != nil {
-		return fmt.Errorf("error writing csv headers: %w", err)
-	}
-
+	tableHeaders := getMultiTableHeaders(commonArgs.addIdHeader)
+	var tableData [][]string
 	for _, testCase := range testCases {
+		id := uuid.NewString()
+
+		if multiArgs.delay != 0 {
+			time.Sleep(multiArgs.delay)
+		}
+
 		request := utils.GetRequest(
+			id,
+			multiArgs.addIdQuery,
 			commonArgs.addIdHeader,
-			commonArgs.addIdQuery,
 			commonArgs.proto,
 			commonArgs.target,
-			testCase,
+			testCase.RequestData,
 		)
 
 		response, err := client.DoRequest(
@@ -101,6 +110,11 @@ func runMultiCmd() error {
 			requestError = err.Error()
 		}
 
+		responseBodyLength := ""
+		if response != nil {
+			responseBodyLength = strconv.Itoa(len(response.Body))
+		}
+
 		responseCode := ""
 		if response != nil {
 			if val, ok := response.Headers.Get(":status"); ok {
@@ -108,16 +122,57 @@ func runMultiCmd() error {
 			}
 		}
 
-		err = csvWriter.WriteData(
+		tableData = append(tableData, getMultiTableData(
+			commonArgs.addIdHeader,
+			id,
 			testCase.FileName,
-			testCase.Id,
 			responseCode,
+			responseBodyLength,
 			requestError,
-		)
-		if err != nil {
-			return fmt.Errorf("error writing csv record: %w", err)
-		}
+		))
+	}
+
+	err = utils.WriteTable(tableHeaders, tableData)
+	if err != nil {
+		return fmt.Errorf("error writing result table: %w", err)
 	}
 
 	return nil
+}
+
+func getMultiTableHeaders(addIdField bool) []string {
+	var headers []string
+	if addIdField {
+		headers = append(headers, "ID")
+	}
+
+	return append(
+		headers,
+		"FILE",
+		"STATUS",
+		"LENGTH",
+		"ERROR",
+	)
+}
+
+func getMultiTableData(
+	addIdField bool,
+	requestId string,
+	testFilename string,
+	responseCode string,
+	responseBodyLength string,
+	error string,
+) []string {
+	var row []string
+	if addIdField {
+		row = append(row, requestId)
+	}
+
+	return append(
+		row,
+		testFilename,
+		responseCode,
+		responseBodyLength,
+		error,
+	)
 }

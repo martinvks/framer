@@ -6,10 +6,12 @@ import (
 
 	"github.com/Martinvks/httptestrunner/client"
 	"github.com/Martinvks/httptestrunner/utils"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
 type singleArguments struct {
+	addIdQuery bool
 	printLines int
 	fileName   string
 }
@@ -17,6 +19,13 @@ type singleArguments struct {
 var singleArgs singleArguments
 
 func init() {
+	singleCmd.Flags().BoolVar(
+		&singleArgs.addIdQuery,
+		"id-query",
+		false,
+		"add a query parameter with name \"id\" and a uuid v4 value to avoid cached responses",
+	)
+
 	singleCmd.Flags().IntVarP(
 		&singleArgs.printLines,
 		"lines",
@@ -40,7 +49,7 @@ func init() {
 
 var singleCmd = &cobra.Command{
 	Use:     "single [flags] target",
-	Short:   "Send a single request to the target",
+	Short:   "Send a single request to the target URL and print the response to console",
 	Example: "httptestrunner single -f ./request.json https://martinvks.no",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -53,17 +62,20 @@ var singleCmd = &cobra.Command{
 }
 
 func runSingleCmd() error {
+	id := uuid.NewString()
+
 	testCase, err := utils.GetSingleTestCase(singleArgs.fileName)
 	if err != nil {
 		return fmt.Errorf("error reading request file: %w", err)
 	}
 
 	request := utils.GetRequest(
+		id,
+		singleArgs.addIdQuery,
 		commonArgs.addIdHeader,
-		commonArgs.addIdQuery,
 		commonArgs.proto,
 		commonArgs.target,
-		testCase,
+		testCase.RequestData,
 	)
 
 	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.keyLogFile)
@@ -88,7 +100,7 @@ func runSingleCmd() error {
 		return err
 	}
 
-	utils.PrintHttpMessage(singleArgs.printLines, response)
+	utils.WriteResponse(singleArgs.printLines, response)
 
 	return nil
 }

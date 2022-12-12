@@ -14,24 +14,61 @@ go install github.com/Martinvks/httptestrunner@latest
 For information about available flags, run:
 
 ```
-httptestrunner --help
+httptestrunner [command] --help
 ```
 
 ### Single command
 
-Sends a single request to the target URL and prints the response to console
+Send a single request to the target URL and print the response to console
 
 ```
-httptestrunner single -f ./request.json https://martinvks.no
+$ httptestrunner single -f ./request.json https://martinvks.no/index.js
+:status: 200
+last-modified: Sat, 26 Nov 2022 15:15:56 GMT
+content-type: application/javascript
+content-length: 25
+date: Mon, 12 Dec 2022 11:16:32 GMT
+age: 0
+server: ATS/10.0.0
+
+console.log("index.js!");
 ```
 
 ### Multi command
 
-Sends multiple requests to the target URL and prints the response status code or error to console
+Send multiple requests to the target URL and print the response status code and body length or error to console
 
 ```
-httptestrunner multi -d ./pseudo-headers https://martinvks.no
+$ httptestrunner multi -d ./requests https://martinvks.no
+FILE                                    STATUS  LENGTH  ERROR                                  
+get.json                                200     222                                            
+head.json                               200     0                                              
+multiple_authority_pseudo_headers.json  400     0                                              
+multiple_method_pseudo_headers.json                     RST_STREAM: error code PROTOCOL_ERROR 
 ```
+
+### Poison command
+
+Send multiple requests to the target and check for cache poisoning
+
+```
+$ httptestrunner poison -d ./requests https://martinvks.no
+FILE                     STATUS  LENGTH  RETRY  POISONED  URL                                                                                        ERROR  
+get.json                 200     1038                                                                                                                       
+x-forwarded-host.json    404     0                                                                                                                       
+x-forwarded-host.json    404     0       true   true      https://martinvks.no?id=dcbeef4b-8c08-4ef4-a5c5-d8da1eec9604         
+x-forwarded-scheme.json  200     1038                     
+```
+
+The poison command will:
+1. Fetch the target resource with a normal GET request
+2. For each of the json request files, send the (possibly malformed) request with a unique id query param
+3. If the status code or the length of the response body is different from the normal GET request, 
+retry the request with a normal GET request and the same id query param
+4. If the status code or the length of the response body is still different, log the url as poisoned
+
+Since it only compares the status code and the length of the response body this command will produce
+a lot of false positives if the content of the target resource is dynamically created.
 
 ## JSON request files
 

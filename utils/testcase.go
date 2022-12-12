@@ -8,16 +8,14 @@ import (
 	"strings"
 
 	"github.com/Martinvks/httptestrunner/types"
-	"github.com/google/uuid"
 )
 
 type TestCase struct {
-	Id       string
 	FileName string
-	TestCaseData
+	RequestData
 }
 
-type TestCaseData struct {
+type RequestData struct {
 	AddDefaultHeaders bool
 	Headers           types.Headers
 	Continuation      types.Headers
@@ -32,9 +30,8 @@ func GetSingleTestCase(fileName string) (TestCase, error) {
 	}
 
 	return TestCase{
-		Id:           uuid.NewString(),
-		FileName:     fileName,
-		TestCaseData: data,
+		FileName:    fileName,
+		RequestData: data,
 	}, nil
 }
 
@@ -51,9 +48,8 @@ func GetAllTestCases(directory string) ([]TestCase, error) {
 			return nil, err
 		}
 		testCases = append(testCases, TestCase{
-			Id:           uuid.NewString(),
-			FileName:     entry.Name(),
-			TestCaseData: data,
+			FileName:    entry.Name(),
+			RequestData: data,
 		})
 	}
 
@@ -80,21 +76,21 @@ func getJsonEntries(directory string) ([]os.DirEntry, error) {
 	return jsonEntries, nil
 }
 
-func unmarshalTestCaseData(fileName string) (TestCaseData, error) {
+func unmarshalTestCaseData(fileName string) (RequestData, error) {
 	content, err := os.ReadFile(fileName)
 	if err != nil {
-		return TestCaseData{}, err
+		return RequestData{}, err
 	}
 
 	contentWithEnv := replaceWithEnvironmentVariables(content)
 
-	data := TestCaseData{
+	data := RequestData{
 		AddDefaultHeaders: true,
 	}
 	err = json.Unmarshal(contentWithEnv, &data)
 
 	if err != nil {
-		return TestCaseData{}, err
+		return RequestData{}, err
 	}
 
 	return data, nil

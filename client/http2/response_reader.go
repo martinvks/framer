@@ -31,7 +31,7 @@ func readResponse(tlsConn *tls.Conn) (*types.HttpResponse, error) {
 		}
 
 		if ga, ok := frame.(*http2.GoAwayFrame); ok {
-			return nil, fmt.Errorf("received GOAWAY frame: error code %v", ga.ErrCode)
+			return nil, fmt.Errorf("GOAWAY: error code %v", ga.ErrCode)
 		}
 
 		if frame.Header().StreamID != 1 {
@@ -57,7 +57,7 @@ func readResponse(tlsConn *tls.Conn) (*types.HttpResponse, error) {
 			bodyRead = frame.StreamEnded()
 
 		case *http2.RSTStreamFrame:
-			return nil, fmt.Errorf("received RST_STREAM frame: error code %v", frame.ErrCode)
+			return nil, fmt.Errorf("RST_STREAM: error code %v", frame.ErrCode)
 		}
 	}
 

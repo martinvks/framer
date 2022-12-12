@@ -12,7 +12,6 @@ import (
 
 type commonArguments struct {
 	addIdHeader bool
-	addIdQuery  bool
 	keyLogFile  string
 	proto       int
 	timeout     time.Duration
@@ -30,13 +29,6 @@ func init() {
 		"id-header",
 		false,
 		"add a header field with name \"x-id\" and a uuid v4 value. the value will be added to the output when using the \"multi\" command",
-	)
-
-	rootCmd.PersistentFlags().BoolVar(
-		&commonArgs.addIdQuery,
-		"id-query",
-		false,
-		"add a query parameter with name \"id\" and a uuid v4 value to avoid cached responses",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(

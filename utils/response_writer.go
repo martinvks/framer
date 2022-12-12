@@ -6,7 +6,7 @@ import (
 	"github.com/Martinvks/httptestrunner/types"
 )
 
-func PrintHttpMessage(printLines int, response *types.HttpResponse) {
+func WriteResponse(printLines int, response *types.HttpResponse) {
 	for _, h := range response.Headers {
 		fmt.Printf("%s: %s\n", h.Name, h.Value)
 	}
