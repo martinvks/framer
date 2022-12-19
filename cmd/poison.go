@@ -179,6 +179,7 @@ func doRequest(
 		commonArgs.addIdHeader,
 		commonArgs.proto,
 		commonArgs.target,
+		commonArgs.commonHeaders,
 		requestData,
 	)
 

@@ -93,6 +93,7 @@ func runMultiCmd() error {
 			commonArgs.addIdHeader,
 			commonArgs.proto,
 			commonArgs.target,
+			commonArgs.commonHeaders,
 			testCase.RequestData,
 		)
 

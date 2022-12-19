@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Martinvks/httptestrunner/types"
@@ -11,14 +12,16 @@ import (
 )
 
 type commonArguments struct {
-	addIdHeader bool
-	keyLogFile  string
-	proto       int
-	timeout     time.Duration
-	target      *url.URL
+	addIdHeader   bool
+	commonHeaders types.Headers
+	keyLogFile    string
+	proto         int
+	timeout       time.Duration
+	target        *url.URL
 }
 
 var (
+	headers    []string
 	proto      string
 	commonArgs commonArguments
 )
@@ -29,6 +32,14 @@ func init() {
 		"id-header",
 		false,
 		"add a header field with name \"x-id\" and a uuid v4 value. the value will be added to the output when using the \"multi\" command",
+	)
+
+	rootCmd.PersistentFlags().StringArrayVarP(
+		&headers,
+		"header",
+		"H",
+		[]string{},
+		"common header fields added to each request. syntax similar to curl: -H \"x-extra-header: val\"",
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
@@ -62,6 +73,20 @@ var rootCmd = &cobra.Command{
 	Use:   "httptestrunner",
 	Short: "An HTTP client for sending (possibly malformed) HTTP/2 and HTTP/3 requests",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+
+		for _, header := range headers {
+			parts := strings.SplitN(header, ":", 2)
+			if len(parts) != 2 {
+				return fmt.Errorf("invalid header '%s', expected syntax: 'x-extra-header: val'", header)
+			}
+			commonArgs.commonHeaders = append(
+				commonArgs.commonHeaders,
+				types.Header{
+					Name:  strings.TrimSpace(strings.ToLower(parts[0])),
+					Value: strings.TrimSpace(parts[1]),
+				})
+		}
+
 		switch proto {
 		case "h2":
 			commonArgs.proto = types.H2
