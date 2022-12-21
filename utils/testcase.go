@@ -96,13 +96,13 @@ func unmarshalTestCaseData(fileName string) (RequestData, error) {
 	return data, nil
 }
 
-// replaces all occurrences of "${ENVIRONMENT_VARIABLE_KEY}" with "ENVIRONMENT_VARIABLE_VALUE"
+// replaces all occurrences of ${ENVIRONMENT_VARIABLE_KEY} with ENVIRONMENT_VARIABLE_VALUE
 func replaceWithEnvironmentVariables(fileContent []byte) []byte {
-	re := regexp.MustCompile(`"\$\{([^="]+)}"`)
+	re := regexp.MustCompile(`\$\{([^="]+)}`)
 
 	return re.ReplaceAllFunc(fileContent, func(templateMatch []byte) []byte {
 		parts := re.FindSubmatch(templateMatch)
 		env := os.Getenv(string(parts[1]))
-		return []byte(fmt.Sprintf(`"%s"`, env))
+		return []byte(env)
 	})
 }

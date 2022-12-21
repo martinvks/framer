@@ -13,12 +13,14 @@ import (
 	"github.com/Martinvks/httptestrunner/utils"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
+	"golang.org/x/exp/slices"
 )
 
 type poisonArguments struct {
-	delay     time.Duration
-	logFile   string
-	directory string
+	delay             time.Duration
+	logFile           string
+	retryNonCacheable bool
+	directory         string
 }
 
 var poisonArgs poisonArguments
@@ -29,6 +31,13 @@ func init() {
 		"delay",
 		0,
 		"duration to wait between testing each request file",
+	)
+
+	poisonCmd.Flags().BoolVar(
+		&poisonArgs.retryNonCacheable,
+		"retry-non-cacheable",
+		false,
+		"send retry request to check cache poisoning for non cacheable response codes (e.g. 400 Bad Request)",
 	)
 
 	poisonCmd.Flags().StringVarP(
@@ -58,13 +67,26 @@ var poisonCmd = &cobra.Command{
 	},
 }
 
+var cacheableStatusCodes = []string{
+	"200",
+	"203",
+	"204",
+	"206",
+	"300",
+	"301",
+	"404",
+	"405",
+	"410",
+	"414",
+	"501",
+}
+
 var tableHeaders = []string{
 	"FILE",
 	"STATUS",
 	"LENGTH",
 	"RETRY",
 	"POISONED",
-	"URL",
 	"ERROR",
 }
 
@@ -72,6 +94,7 @@ type ResponseData struct {
 	errorString string
 	status      string
 	length      string
+	location    string
 }
 
 func runPoisonCmd() error {
@@ -128,11 +151,13 @@ func runPoisonCmd() error {
 			response.length,
 			"",
 			"",
-			"",
 			response.errorString,
 		})
 
-		if response != baseResponse && err == nil {
+		isDifferent := response != baseResponse && err == nil
+		isCacheable := slices.Contains(cacheableStatusCodes, response.status)
+
+		if isDifferent && (isCacheable || poisonArgs.retryNonCacheable) {
 			response, err = doRequest(
 				id,
 				ip,
@@ -142,18 +167,12 @@ func runPoisonCmd() error {
 
 			poisoned := response != baseResponse && err == nil
 
-			url := ""
-			if poisoned {
-				url = commonArgs.target.String()
-			}
-
 			tableData = append(tableData, []string{
 				testCase.FileName,
 				response.status,
 				response.length,
 				"true",
 				strconv.FormatBool(poisoned),
-				url,
 				response.errorString,
 			})
 		}
@@ -202,6 +221,12 @@ func doRequest(
 		length = strconv.Itoa(len(response.Body))
 	}
 
+	location := ""
+	if response != nil {
+		if val, ok := response.Headers.Get("location"); ok {
+			location = val
+		}
+	}
 	status := ""
 	if response != nil {
 		if val, ok := response.Headers.Get(":status"); ok {
@@ -212,6 +237,7 @@ func doRequest(
 	return ResponseData{
 		errorString: errorString,
 		length:      length,
+		location:    location,
 		status:      status,
 	}, err
 }

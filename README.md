@@ -53,22 +53,22 @@ Send multiple requests to the target and check for cache poisoning
 
 ```
 $ httptestrunner poison -d ./requests https://martinvks.no
-FILE                     STATUS  LENGTH  RETRY  POISONED  URL                                                                                        ERROR  
-get.json                 200     1038                                                                                                                       
-x-forwarded-host.json    404     0                                                                                                                       
-x-forwarded-host.json    404     0       true   true      https://martinvks.no?id=dcbeef4b-8c08-4ef4-a5c5-d8da1eec9604         
-x-forwarded-scheme.json  200     1038                     
+FILE                         STATUS  LENGTH  RETRY  POISONED  ERROR  
+get.json                     200     222                             
+x-forwarded-host.json        200     222                             
+x-http-method-override.json  405     0                               
+x-http-method-override.json  405     0       true   true             
 ```
 
 The poison command will:
 1. Fetch the target resource with a normal GET request
 2. For each of the json request files, send the (possibly malformed) request with a unique id query param
-3. If the status code or the length of the response body is different from the normal GET request, 
-retry the request with a normal GET request and the same id query param
-4. If the status code or the length of the response body is still different, log the url as poisoned
+3. If the response is cacheable and different from the normal GET request,
+   retry the request with a normal GET request and the same id query param
+4. If the response is still different, log it as poisoned
 
-Since it only compares the status code and the length of the response body this command will produce
-a lot of false positives if the content of the target resource is dynamically created.
+The poison command compares status code, location header and response body length.
+Since dynamically created resources have varying response length this command might produce a lot of false positives.
 
 ## JSON request files
 
@@ -93,32 +93,33 @@ Requests are defined in JSON files
 ### Fields
 
 * **addDefaultHeaders**  `boolean` (default: `true`)  
-Add the following pseudo-headers to the first HEADERS frame:  
-`:authority` hostname from target URL  
-`:method` GET  
-`:path` path and query part of target URL  
-`:scheme` https
+  Add the following pseudo-headers to the first HEADERS frame:  
+  `:authority` hostname from target URL  
+  `:method` GET  
+  `:path` path and query part of target URL  
+  `:scheme` https
 * **headers** `array<header>`  
-Header fields sent in the first HEADERS frame  
-Default pseudo-header values can be replaced by adding a header field with the pseudo-header name
+  Header fields sent in the first HEADERS frame  
+  Default pseudo-header values can be replaced by adding a header field with the pseudo-header name
 * **continuation** `array<header>`  
-Header fields sent in a CONTINUATION frame  
-Only works when using `h2` protocol
+  Header fields sent in a CONTINUATION frame  
+  Only works when using `h2` protocol
 * **body** `string`  
-The request body
+  The request body
 * **trailer** `array<header>`  
-Trailer fields sent in the last HEADERS frame
+  Trailer fields sent in the last HEADERS frame
 
 ### Header fields
 
 * **name** `string`  
-Header field name
+  Header field name
 * **value** `string`  
-Header field value
+  Header field value
 
 ### Examples
 
-Environment variables can be used with the `"${ENVIRONMENT_VARIABLE_KEY}"` syntax
+Environment variables can be used with the `${ENVIRONMENT_VARIABLE_KEY}` syntax
+
 ```json
 {
   "headers": [
@@ -129,8 +130,10 @@ Environment variables can be used with the `"${ENVIRONMENT_VARIABLE_KEY}"` synta
   ]
 }
 ```
+
 Control characters can be added to header field names, header field values and the body by escaping them.  
 See the [JSON RFC](https://www.rfc-editor.org/rfc/rfc8259.html#section-7) for more details.
+
 ```json
 {
   "headers": [
@@ -145,9 +148,12 @@ See the [JSON RFC](https://www.rfc-editor.org/rfc/rfc8259.html#section-7) for mo
   ]
 }
 ```
-When `addDefaultHeaders` is true, default values can be replaced by adding a header field with the pseudo-header name to `headers`.
+
+When `addDefaultHeaders` is true, default values can be replaced by adding a header field with the pseudo-header name
+to `headers`.
 Any extra pseudo-headers will be added to the HEADERS frame.
 For example sending two `:path` header fields can be done with:
+
 ```json
 {
   "headers": [
