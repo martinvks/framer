@@ -61,14 +61,16 @@ x-http-method-override.json  405     0       true   true
 ```
 
 The poison command will:
+
 1. Fetch the target resource with a normal GET request
 2. For each of the json request files, send the (possibly malformed) request with a unique id query param
 3. If the response is cacheable and different from the normal GET request,
    retry the request with a normal GET request and the same id query param
 4. If the response is still different, log it as poisoned
 
-The poison command compares status code, location header and response body length.
-Since dynamically created resources have varying response length this command might produce a lot of false positives.
+It compares status code, location header and response body length.
+Since dynamically created resources can have varying response length this command might produce a lot of false
+positives.
 
 ## JSON request files
 
@@ -76,16 +78,10 @@ Requests are defined in JSON files
 
 ```json
 {
-  "headers": [
-    {
-      "name": ":method",
-      "value": "POST"
-    },
-    {
-      "name": "content-type",
-      "value": "application/x-www-form-urlencoded"
-    }
-  ],
+  "headers": {
+    ":method": "POST",
+    "content-type": "application/x-www-form-urlencoded"
+  },
   "body": "param=hello"
 }
 ```
@@ -97,37 +93,42 @@ Requests are defined in JSON files
   `:authority` hostname from target URL  
   `:method` GET  
   `:path` path and query part of target URL  
-  `:scheme` https
-* **headers** `array<header>`  
-  Header fields sent in the first HEADERS frame  
-  Default pseudo-header values can be replaced by adding a header field with the pseudo-header name
-* **continuation** `array<header>`  
+  `:scheme` https  
+  Default values can be replaced by adding a header field with the pseudo-header name in \"headers\"
+* **headers** `Headers`  
+  Header fields sent in the first HEADERS frame
+* **continuation** `Headers`  
   Header fields sent in a CONTINUATION frame  
   Only works when using `h2` protocol
 * **body** `string`  
   The request body
-* **trailer** `array<header>`  
+* **trailer** `Headers`  
   Trailer fields sent in the last HEADERS frame
 
-### Header fields
+### Headers
 
-* **name** `string`  
-  Header field name
-* **value** `string`  
-  Header field value
+* **[string]** `string | array<string>`
 
 ### Examples
+
+When `addDefaultHeaders` is true, the default value can be replaced by adding a header field with the pseudo-header
+name to `headers`.
+
+```json
+{
+  "headers": {
+    ":authority": "evil.com"
+  }
+}
+```
 
 Environment variables can be used with the `${ENVIRONMENT_VARIABLE_KEY}` syntax
 
 ```json
 {
-  "headers": [
-    {
-      "name": ":method",
-      "value": "${REQUEST_METHOD}"
-    }
-  ]
+  "headers": {
+    ":method": "${REQUEST_METHOD}"
+  }
 }
 ```
 
@@ -136,35 +137,38 @@ See the [JSON RFC](https://www.rfc-editor.org/rfc/rfc8259.html#section-7) for mo
 
 ```json
 {
-  "headers": [
-    {
-      "name": "x-smuggle-header",
-      "value": "foo\r\nx-another-header: bar"
-    },
-    {
-      "name": "x-null-byte",
-      "value": "ab\u0000c"
-    }
-  ]
+  "headers": {
+    "x-smuggle-header": "foo\r\nx-another-header: bar",
+    "x-null-byte": "ab\u0000c"
+  }
 }
 ```
 
-When `addDefaultHeaders` is true, default values can be replaced by adding a header field with the pseudo-header name
-to `headers`.
-Any extra pseudo-headers will be added to the HEADERS frame.
-For example sending two `:path` header fields can be done with:
+To send multiple header fields with the same header field name, specify the values as an array
 
 ```json
 {
-  "headers": [
-    {
-      "name": ":path",
-      "value": "/"
-    },
-    {
-      "name": ":path",
-      "value": "/admin"
-    }
-  ]
+  "headers": {
+    "cookie": [
+      "a=b",
+      "c=d",
+      "e=f"
+    ]
+  }
+}
+```
+
+A trailer section can be added to the request with the `trailer` field
+
+```json
+{
+  "headers": {
+    ":method": "POST",
+    "trailer": "Foo"
+  },
+  "body": "some data",
+  "trailer": {
+    "foo": "bar"
+  }
 }
 ```

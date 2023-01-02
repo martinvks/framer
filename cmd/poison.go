@@ -98,9 +98,9 @@ type ResponseData struct {
 }
 
 func runPoisonCmd() error {
-	testCases, err := utils.GetAllTestCases(poisonArgs.directory)
+	requestFiles, err := utils.GetRequestFiles(poisonArgs.directory)
 	if err != nil {
-		return fmt.Errorf("error reading request files: %w", err)
+		return err
 	}
 
 	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.keyLogFile)
@@ -131,7 +131,7 @@ func runPoisonCmd() error {
 	}
 
 	var tableData [][]string
-	for _, testCase := range testCases {
+	for _, requestFile := range requestFiles {
 		id := uuid.NewString()
 
 		if poisonArgs.delay != 0 {
@@ -142,11 +142,11 @@ func runPoisonCmd() error {
 			id,
 			ip,
 			keyLogWriter,
-			testCase.RequestData,
+			requestFile.RequestData,
 		)
 
 		tableData = append(tableData, []string{
-			testCase.FileName,
+			requestFile.FileName,
 			response.status,
 			response.length,
 			"",
@@ -168,7 +168,7 @@ func runPoisonCmd() error {
 			poisoned := response != baseResponse && err == nil
 
 			tableData = append(tableData, []string{
-				testCase.FileName,
+				requestFile.FileName,
 				response.status,
 				response.length,
 				"true",

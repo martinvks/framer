@@ -13,14 +13,12 @@ func WriteTable(tableHeaders []string, tableData [][]string) error {
 		return err
 	}
 
-	for index := range tableHeaders {
-		fmt.Printf("%-*s", maxLengths[index]+padding, tableHeaders[index])
-	}
-	fmt.Println()
+	table := [][]string{tableHeaders}
+	table = append(table, tableData...)
 
-	for _, data := range tableData {
-		for index := range data {
-			fmt.Printf("%-*s", maxLengths[index]+padding, data[index])
+	for _, row := range table {
+		for index := range row {
+			fmt.Printf("%-*s", maxLengths[index]+padding, row[index])
 		}
 		fmt.Println()
 	}

@@ -64,9 +64,9 @@ var singleCmd = &cobra.Command{
 func runSingleCmd() error {
 	id := uuid.NewString()
 
-	testCase, err := utils.GetSingleTestCase(singleArgs.fileName)
+	requestFile, err := utils.GetRequestFile(singleArgs.fileName)
 	if err != nil {
-		return fmt.Errorf("error reading request file: %w", err)
+		return err
 	}
 
 	request := utils.GetRequest(
@@ -76,7 +76,7 @@ func runSingleCmd() error {
 		commonArgs.proto,
 		commonArgs.target,
 		commonArgs.commonHeaders,
-		testCase.RequestData,
+		requestFile.RequestData,
 	)
 
 	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.keyLogFile)

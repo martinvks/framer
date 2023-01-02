@@ -63,9 +63,9 @@ var multiCmd = &cobra.Command{
 }
 
 func runMultiCmd() error {
-	testCases, err := utils.GetAllTestCases(multiArgs.directory)
+	requestFiles, err := utils.GetRequestFiles(multiArgs.directory)
 	if err != nil {
-		return fmt.Errorf("error reading request files: %w", err)
+		return err
 	}
 
 	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.keyLogFile)
@@ -80,7 +80,7 @@ func runMultiCmd() error {
 
 	tableHeaders := getMultiTableHeaders(commonArgs.addIdHeader)
 	var tableData [][]string
-	for _, testCase := range testCases {
+	for _, requestFile := range requestFiles {
 		id := uuid.NewString()
 
 		if multiArgs.delay != 0 {
@@ -94,7 +94,7 @@ func runMultiCmd() error {
 			commonArgs.proto,
 			commonArgs.target,
 			commonArgs.commonHeaders,
-			testCase.RequestData,
+			requestFile.RequestData,
 		)
 
 		response, err := client.DoRequest(
@@ -126,7 +126,7 @@ func runMultiCmd() error {
 		tableData = append(tableData, getMultiTableData(
 			commonArgs.addIdHeader,
 			id,
-			testCase.FileName,
+			requestFile.FileName,
 			responseCode,
 			responseBodyLength,
 			requestError,
