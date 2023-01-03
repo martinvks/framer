@@ -75,15 +75,15 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
 		for _, header := range headers {
-			parts := strings.Split(header, ":")
-			if len(parts) != 2 {
+			name, value, found := strings.Cut(header, ":")
+			if !found {
 				return fmt.Errorf("invalid header '%s', expected syntax: 'x-extra-header: val'", header)
 			}
 			commonArgs.commonHeaders = append(
 				commonArgs.commonHeaders,
 				types.Header{
-					Name:  strings.TrimSpace(strings.ToLower(parts[0])),
-					Value: strings.TrimSpace(parts[1]),
+					Name:  strings.TrimSpace(strings.ToLower(name)),
+					Value: strings.TrimSpace(value),
 				})
 		}
 
