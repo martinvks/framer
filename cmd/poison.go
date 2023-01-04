@@ -18,7 +18,6 @@ import (
 
 type poisonArguments struct {
 	delay             time.Duration
-	logFile           string
 	retryNonCacheable bool
 	directory         string
 }

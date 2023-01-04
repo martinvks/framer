@@ -41,11 +41,11 @@ Send multiple requests to the target URL and print the response status code and 
 
 ```
 $ framer multi -d ./requests https://martinvks.no
-FILE                                    STATUS  LENGTH  ERROR                                  
-get.json                                200     222                                            
-head.json                               200     0                                              
-multiple_authority_pseudo_headers.json  400     0                                              
-multiple_method_pseudo_headers.json                     RST_STREAM: error code PROTOCOL_ERROR 
+FILE                                    STATUS  LENGTH  ERROR                                
+get.json                                200     222                                          
+head.json                               200     0                                            
+multiple_authority_pseudo_headers.json  400     0                                            
+multiple_method_pseudo_headers.json                     RST_STREAM: error code PROTOCOL_ERROR
 ```
 
 ### Poison command
