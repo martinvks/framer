@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Martinvks/httptestrunner/client"
-	"github.com/Martinvks/httptestrunner/utils"
 	"github.com/google/uuid"
+	"github.com/martinvks/framer/client"
+	"github.com/martinvks/framer/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/slices"
 )
@@ -45,7 +45,7 @@ func init() {
 		"directory",
 		"d",
 		"",
-		"directory containing json request files (required)  https://github.com/Martinvks/httptestrunner#json-request-files",
+		"directory containing json request files (required)  https://github.com/martinvks/framer#json-request-files",
 	)
 
 	_ = poisonCmd.MarkFlagRequired("directory")
@@ -56,7 +56,7 @@ func init() {
 var poisonCmd = &cobra.Command{
 	Use:     "poison [flags] target",
 	Short:   "Send multiple requests to the target and check for cache poisoning",
-	Example: "httptestrunner poison -d ./requests https://martinvks.no/index.js",
+	Example: "framer poison -d ./requests https://martinvks.no/index.js",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runPoisonCmd()

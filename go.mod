@@ -1,4 +1,4 @@
-module github.com/Martinvks/httptestrunner
+module github.com/martinvks/framer
 
 go 1.19
 

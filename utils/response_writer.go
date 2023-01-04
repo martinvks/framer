@@ -3,7 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 func WriteResponse(printLines int, response *types.HttpResponse) {

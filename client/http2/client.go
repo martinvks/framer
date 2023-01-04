@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 func SendHTTP2Request(

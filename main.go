@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Martinvks/httptestrunner/cmd"
+import "github.com/martinvks/framer/cmd"
 
 func main() {
 	cmd.Execute()

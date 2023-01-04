@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/Martinvks/httptestrunner/types"
 	"github.com/lucas-clemente/quic-go"
 	"github.com/marten-seemann/qpack"
+	"github.com/martinvks/framer/types"
 )
 
 const streamTypeControlStream = 0x00

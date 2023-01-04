@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 func GetRequest(

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 	"github.com/spf13/cobra"
 )
 
@@ -70,7 +70,7 @@ func init() {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "httptestrunner",
+	Use:   "framer",
 	Short: "An HTTP client for sending (possibly malformed) HTTP/2 and HTTP/3 requests",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 

@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 type RequestFile struct {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 type jsonFileData struct {

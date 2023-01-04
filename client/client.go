@@ -7,9 +7,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Martinvks/httptestrunner/client/http2"
-	"github.com/Martinvks/httptestrunner/client/http3"
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/client/http2"
+	"github.com/martinvks/framer/client/http3"
+	"github.com/martinvks/framer/types"
 )
 
 func DoRequest(

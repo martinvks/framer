@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Martinvks/httptestrunner/client"
-	"github.com/Martinvks/httptestrunner/utils"
 	"github.com/google/uuid"
+	"github.com/martinvks/framer/client"
+	"github.com/martinvks/framer/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +40,7 @@ func init() {
 		"directory",
 		"d",
 		"",
-		"directory containing json request files (required)  https://github.com/Martinvks/httptestrunner#json-request-files",
+		"directory containing json request files (required)  https://github.com/martinvks/framer#json-request-files",
 	)
 
 	_ = multiCmd.MarkFlagRequired("directory")
@@ -51,7 +51,7 @@ func init() {
 var multiCmd = &cobra.Command{
 	Use:     "multi [flags] target",
 	Short:   "Send multiple requests to the target URL and print the response status code or error to console",
-	Example: "httptestrunner multi -d ./requests https://martinvks.no",
+	Example: "framer multi -d ./requests https://martinvks.no",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runMultiCmd()
@@ -159,7 +159,7 @@ func getMultiTableHeaders(addIdField bool) []string {
 func getMultiTableData(
 	addIdField bool,
 	requestId string,
-	testFilename string,
+	requestFilename string,
 	responseCode string,
 	responseBodyLength string,
 	error string,
@@ -171,7 +171,7 @@ func getMultiTableData(
 
 	return append(
 		row,
-		testFilename,
+		requestFilename,
 		responseCode,
 		responseBodyLength,
 		error,

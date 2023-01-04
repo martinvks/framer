@@ -6,7 +6,7 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/hpack"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 func readResponse(tlsConn *tls.Conn) (*types.HttpResponse, error) {

@@ -1,4 +1,5 @@
-# httptestrunner
+<h1 align="center">framer</h1>
+<br>
 
 An HTTP client for sending (possibly malformed) HTTP/2 and HTTP/3 requests.  
 Based on [http2smugl](https://github.com/neex/http2smugl) written by Emil Lerner.
@@ -6,7 +7,7 @@ Based on [http2smugl](https://github.com/neex/http2smugl) written by Emil Lerner
 ## Installation
 
 ```
-go install github.com/Martinvks/httptestrunner@latest
+go install github.com/martinvks/framer@latest
 ```
 
 ## Usage
@@ -14,7 +15,7 @@ go install github.com/Martinvks/httptestrunner@latest
 For information about available flags, run:
 
 ```
-httptestrunner [command] --help
+framer [command] --help
 ```
 
 ### Single command
@@ -22,7 +23,7 @@ httptestrunner [command] --help
 Send a single request to the target URL and print the response to console
 
 ```
-$ httptestrunner single -f ./request.json https://martinvks.no/index.js
+$ framer single -f ./request.json https://martinvks.no/index.js
 :status: 200
 last-modified: Sat, 26 Nov 2022 15:15:56 GMT
 content-type: application/javascript
@@ -39,7 +40,7 @@ console.log("index.js!");
 Send multiple requests to the target URL and print the response status code and body length or error to console
 
 ```
-$ httptestrunner multi -d ./requests https://martinvks.no
+$ framer multi -d ./requests https://martinvks.no
 FILE                                    STATUS  LENGTH  ERROR                                  
 get.json                                200     222                                            
 head.json                               200     0                                              
@@ -52,7 +53,7 @@ multiple_method_pseudo_headers.json                     RST_STREAM: error code P
 Send multiple requests to the target and check for cache poisoning
 
 ```
-$ httptestrunner poison -d ./requests https://martinvks.no
+$ framer poison -d ./requests https://martinvks.no
 FILE                         STATUS  LENGTH  RETRY  POISONED  ERROR  
 get.json                     200     222                             
 x-forwarded-host.json        200     222                             

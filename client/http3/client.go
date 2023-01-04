@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Martinvks/httptestrunner/types"
 	"github.com/lucas-clemente/quic-go"
+	"github.com/martinvks/framer/types"
 )
 
 const (

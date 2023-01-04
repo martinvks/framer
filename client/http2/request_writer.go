@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"golang.org/x/net/http2"
 
-	"github.com/Martinvks/httptestrunner/types"
+	"github.com/martinvks/framer/types"
 )
 
 const (

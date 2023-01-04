@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Martinvks/httptestrunner/client"
-	"github.com/Martinvks/httptestrunner/utils"
 	"github.com/google/uuid"
+	"github.com/martinvks/framer/client"
+	"github.com/martinvks/framer/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +39,7 @@ func init() {
 		"filename",
 		"f",
 		"",
-		"json request file (required)  https://github.com/Martinvks/httptestrunner#json-request-files",
+		"json request file (required)  https://github.com/martinvks/framer#json-request-files",
 	)
 
 	_ = singleCmd.MarkFlagRequired("filename")
@@ -50,7 +50,7 @@ func init() {
 var singleCmd = &cobra.Command{
 	Use:     "single [flags] target",
 	Short:   "Send a single request to the target URL and print the response to console",
-	Example: "httptestrunner single -f ./request.json https://martinvks.no",
+	Example: "framer single -f ./request.json https://martinvks.no",
 	Args:    cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		err := runSingleCmd()
