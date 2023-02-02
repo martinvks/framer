@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/lucas-clemente/quic-go"
 	"github.com/martinvks/framer/types"
+	"github.com/quic-go/quic-go"
 )
 
 const (

@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/lucas-clemente/quic-go"
-	"github.com/marten-seemann/qpack"
 	"github.com/martinvks/framer/types"
+	"github.com/quic-go/qpack"
+	"github.com/quic-go/quic-go"
 )
 
 const streamTypeControlStream = 0x00

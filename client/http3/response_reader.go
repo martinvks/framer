@@ -6,9 +6,9 @@ import (
 	"golang.org/x/net/context"
 	"io"
 
-	"github.com/lucas-clemente/quic-go"
-	"github.com/marten-seemann/qpack"
 	"github.com/martinvks/framer/types"
+	"github.com/quic-go/qpack"
+	"github.com/quic-go/quic-go"
 )
 
 type http3Frame struct {
