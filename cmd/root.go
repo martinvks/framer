@@ -11,27 +11,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type commonArguments struct {
-	addIdHeader   bool
-	commonHeaders types.Headers
-	keyLogFile    string
-	proto         int
-	timeout       time.Duration
-	target        *url.URL
-}
-
 var (
 	headers    []string
 	proto      string
-	commonArgs commonArguments
+	commonArgs types.CommonArguments
 )
 
 func init() {
 	rootCmd.PersistentFlags().BoolVar(
-		&commonArgs.addIdHeader,
+		&commonArgs.AddIdHeader,
 		"id-header",
 		false,
-		"add a header field with name \"x-id\" and a uuid v4 value. the value will be added to the output when using the \"multi\" command",
+		"add a header field with name \"x-id\" and a random uuid v4 value. the value will be added to the output when using the \"multi\" command",
+	)
+
+	rootCmd.PersistentFlags().StringVar(
+		&commonArgs.IdHeaderName,
+		"id-header-name",
+		"x-id",
+		"change the field name for the id-header. can be used as cache buster for vary headers, i.e., \"--id-header --id-header-name origin\"",
 	)
 
 	rootCmd.PersistentFlags().StringArrayVarP(
@@ -43,7 +41,7 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&commonArgs.keyLogFile,
+		&commonArgs.KeyLogFile,
 		"keylogfile",
 		"k",
 		"",
@@ -51,7 +49,7 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().DurationVarP(
-		&commonArgs.timeout,
+		&commonArgs.Timeout,
 		"timeout",
 		"t",
 		10*time.Second,
@@ -79,8 +77,8 @@ var rootCmd = &cobra.Command{
 			if !found {
 				return fmt.Errorf("invalid header '%s', expected syntax: 'x-extra-header: val'", header)
 			}
-			commonArgs.commonHeaders = append(
-				commonArgs.commonHeaders,
+			commonArgs.CommonHeaders = append(
+				commonArgs.CommonHeaders,
 				types.Header{
 					Name:  strings.TrimSpace(strings.ToLower(name)),
 					Value: strings.TrimSpace(value),
@@ -89,9 +87,9 @@ var rootCmd = &cobra.Command{
 
 		switch proto {
 		case "h2":
-			commonArgs.proto = types.H2
+			commonArgs.Proto = types.H2
 		case "h3":
-			commonArgs.proto = types.H3
+			commonArgs.Proto = types.H3
 		default:
 			return fmt.Errorf("unknown protocol '%s'", proto)
 		}
@@ -100,7 +98,7 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		commonArgs.target = target
+		commonArgs.Target = target
 
 		return nil
 	},

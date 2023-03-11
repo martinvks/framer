@@ -7,26 +7,16 @@ import (
 	"github.com/martinvks/framer/types"
 )
 
-func GetRequest(
-	id string,
-	addIdQuery bool,
-	addIdHeader bool,
-	proto int,
-	target *url.URL,
-	commonHeaders types.Headers,
-	requestData RequestData,
-) types.HttpRequest {
+func GetRequest(id string, addIdQuery bool, requestData RequestData, commonArgs types.CommonArguments) types.HttpRequest {
 	headers := getHeaders(
 		id,
-		target,
 		addIdQuery,
-		addIdHeader,
-		commonHeaders,
 		requestData,
+		commonArgs,
 	)
 
 	continuation := getContinuationHeaders(
-		proto,
+		commonArgs.Proto,
 		requestData,
 	)
 
@@ -38,27 +28,20 @@ func GetRequest(
 	}
 }
 
-func getHeaders(
-	id string,
-	target *url.URL,
-	addIdQuery bool,
-	addIdHeader bool,
-	commonHeaders types.Headers,
-	requestData RequestData,
-) types.Headers {
+func getHeaders(id string, addIdQuery bool, requestData RequestData, commonArgs types.CommonArguments) types.Headers {
 	var headers types.Headers
 
 	if requestData.AddDefaultHeaders {
-		headers = getHeadersWithDefaults(id, addIdQuery, target, requestData)
+		headers = getHeadersWithDefaults(id, addIdQuery, commonArgs.Target, requestData)
 	} else {
 		headers = requestData.Headers
 	}
 
-	if addIdHeader {
-		headers = append(headers, types.Header{Name: "x-id", Value: id})
+	if commonArgs.AddIdHeader {
+		headers = append(headers, types.Header{Name: commonArgs.IdHeaderName, Value: id})
 	}
 
-	headers = append(headers, commonHeaders...)
+	headers = append(headers, commonArgs.CommonHeaders...)
 
 	return headers
 }

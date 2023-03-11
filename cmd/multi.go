@@ -68,17 +68,17 @@ func runMultiCmd() error {
 		return err
 	}
 
-	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.keyLogFile)
+	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.KeyLogFile)
 	if err != nil {
 		return fmt.Errorf("error creating key log writer: %w", err)
 	}
 
-	ip, err := utils.LookUp(commonArgs.target.Hostname())
+	ip, err := utils.LookUp(commonArgs.Target.Hostname())
 	if err != nil {
 		return err
 	}
 
-	tableHeaders := getMultiTableHeaders(commonArgs.addIdHeader)
+	tableHeaders := getMultiTableHeaders(commonArgs.AddIdHeader)
 	var tableData [][]string
 	for _, requestFile := range requestFiles {
 		id := uuid.NewString()
@@ -90,17 +90,14 @@ func runMultiCmd() error {
 		request := utils.GetRequest(
 			id,
 			multiArgs.addIdQuery,
-			commonArgs.addIdHeader,
-			commonArgs.proto,
-			commonArgs.target,
-			commonArgs.commonHeaders,
 			requestFile.RequestData,
+			commonArgs,
 		)
 
 		response, err := client.DoRequest(
-			commonArgs.proto,
-			commonArgs.target,
-			commonArgs.timeout,
+			commonArgs.Proto,
+			commonArgs.Target,
+			commonArgs.Timeout,
 			keyLogWriter,
 			ip,
 			&request,
@@ -124,7 +121,7 @@ func runMultiCmd() error {
 		}
 
 		tableData = append(tableData, getMultiTableData(
-			commonArgs.addIdHeader,
+			commonArgs.AddIdHeader,
 			id,
 			requestFile.FileName,
 			responseCode,

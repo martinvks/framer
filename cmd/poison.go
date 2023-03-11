@@ -102,12 +102,12 @@ func runPoisonCmd() error {
 		return err
 	}
 
-	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.keyLogFile)
+	keyLogWriter, err := utils.GetKeyLogWriter(commonArgs.KeyLogFile)
 	if err != nil {
 		return fmt.Errorf("error creating key log writer: %w", err)
 	}
 
-	ip, err := utils.LookUp(commonArgs.target.Hostname())
+	ip, err := utils.LookUp(commonArgs.Target.Hostname())
 	if err != nil {
 		return err
 	}
@@ -194,17 +194,14 @@ func doRequest(
 	request := utils.GetRequest(
 		id,
 		true,
-		commonArgs.addIdHeader,
-		commonArgs.proto,
-		commonArgs.target,
-		commonArgs.commonHeaders,
 		requestData,
+		commonArgs,
 	)
 
 	response, err := client.DoRequest(
-		commonArgs.proto,
-		commonArgs.target,
-		commonArgs.timeout,
+		commonArgs.Proto,
+		commonArgs.Target,
+		commonArgs.Timeout,
 		keyLogWriter,
 		ip,
 		&request,
